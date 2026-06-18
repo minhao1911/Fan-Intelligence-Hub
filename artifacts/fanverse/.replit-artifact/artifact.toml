@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FanVerse"
+version = "1.0.0"
+id = "artifacts/fanverse"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22461
+
+[services.development]
+run = "pnpm --filter @workspace/fanverse run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fanverse", "run", "build" ]
+publicDir = "artifacts/fanverse/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22461"
+BASE_PATH = "/"

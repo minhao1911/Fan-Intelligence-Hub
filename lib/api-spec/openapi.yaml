@@ -1,22 +1,35 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: FanVerse - Football Fan Intelligence Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: nations
+    description: Nation operations
+  - name: matches
+    description: Match operations
+  - name: polls
+    description: Poll and voting operations
+  - name: reactions
+    description: Match reaction surveys
+  - name: discussions
+    description: Community discussions
+  - name: users
+    description: User profile and reputation
+  - name: pulse
+    description: Nation Pulse analytics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +37,526 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── USERS ────────────────────────────────────────────────────────────────
+  /me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+    put:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [users]
+      summary: Top fans by reputation
+      parameters:
+        - name: nationCode
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /stats/global:
+    get:
+      operationId: getGlobalStats
+      tags: [pulse]
+      summary: Global platform statistics
+      responses:
+        "200":
+          description: Global stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalStats"
+
+  # ─── NATIONS ──────────────────────────────────────────────────────────────
+  /nations:
+    get:
+      operationId: listNations
+      tags: [nations]
+      summary: List all nations
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: confederation
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of nations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Nation"
+
+  /nations/{code}:
+    get:
+      operationId: getNation
+      tags: [nations]
+      summary: Get nation details
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationDetail"
+        "404":
+          description: Nation not found
+
+  /nations/{code}/join:
+    post:
+      operationId: joinNation
+      tags: [nations]
+      summary: Join a nation as a fan
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Joined nation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /nations/{code}/leave:
+    post:
+      operationId: leaveNation
+      tags: [nations]
+      summary: Leave a nation
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Left nation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /nations/{code}/pulse:
+    get:
+      operationId: getNationPulse
+      tags: [pulse]
+      summary: Get Nation Pulse analytics
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nation pulse data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationPulse"
+
+  /nations/{code}/members:
+    get:
+      operationId: getNationMembers
+      tags: [nations]
+      summary: Get nation fan members
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nation members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSummary"
+
+  # ─── MATCHES ──────────────────────────────────────────────────────────────
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List upcoming and recent matches
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [upcoming, live, completed]
+        - name: nationCode
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /matches/{id}:
+    get:
+      operationId: getMatch
+      tags: [matches]
+      summary: Get match details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchDetail"
+        "404":
+          description: Match not found
+
+  /matches/{id}/pulse:
+    get:
+      operationId: getMatchPulse
+      tags: [pulse]
+      summary: Get aggregated fan pulse for a match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match pulse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchPulse"
+
+  # ─── POLLS ────────────────────────────────────────────────────────────────
+  /matches/{matchId}/polls:
+    get:
+      operationId: listMatchPolls
+      tags: [polls]
+      summary: List polls for a match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of polls
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Poll"
+
+  /matches/{matchId}/polls/{pollId}/vote:
+    post:
+      operationId: castPollVote
+      tags: [polls]
+      summary: Cast a vote on a poll
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: pollId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PollVoteInput"
+      responses:
+        "200":
+          description: Vote recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Poll"
+        "401":
+          description: Unauthorized
+
+  # ─── REACTIONS ────────────────────────────────────────────────────────────
+  /matches/{matchId}/reactions:
+    get:
+      operationId: listMatchReactions
+      tags: [reactions]
+      summary: List fan reactions for a match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of reactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reaction"
+    post:
+      operationId: submitReaction
+      tags: [reactions]
+      summary: Submit a post-match reaction
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionInput"
+      responses:
+        "201":
+          description: Reaction submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reaction"
+        "401":
+          description: Unauthorized
+
+  /matches/{matchId}/reactions/summary:
+    get:
+      operationId: getReactionSummary
+      tags: [reactions]
+      summary: Get sentiment summary for a match
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reaction summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactionSummary"
+
+  # ─── DISCUSSIONS ──────────────────────────────────────────────────────────
+  /discussions:
+    get:
+      operationId: listDiscussions
+      tags: [discussions]
+      summary: List community discussions
+      parameters:
+        - name: nationCode
+          in: query
+          schema:
+            type: string
+        - name: matchId
+          in: query
+          schema:
+            type: integer
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of discussions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Discussion"
+    post:
+      operationId: createDiscussion
+      tags: [discussions]
+      summary: Create a new discussion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscussionInput"
+      responses:
+        "201":
+          description: Discussion created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Discussion"
+        "401":
+          description: Unauthorized
+
+  /discussions/{id}:
+    get:
+      operationId: getDiscussion
+      tags: [discussions]
+      summary: Get discussion with comments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Discussion with comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscussionDetail"
+        "404":
+          description: Not found
+
+  /discussions/{id}/comments:
+    post:
+      operationId: addComment
+      tags: [discussions]
+      summary: Add a comment to a discussion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "401":
+          description: Unauthorized
+
+  /discussions/{id}/upvote:
+    post:
+      operationId: upvoteDiscussion
+      tags: [discussions]
+      summary: Upvote a discussion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Upvoted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Discussion"
+        "401":
+          description: Unauthorized
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +564,530 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # ── User ──────────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        nationCode:
+          type: ["string", "null"]
+        nationName:
+          type: ["string", "null"]
+        reputationPoints:
+          type: integer
+        reputationTier:
+          type: string
+        totalVotes:
+          type: integer
+        totalReactions:
+          type: integer
+        totalDiscussions:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, clerkId, username, reputationPoints, reputationTier, totalVotes, totalReactions, totalDiscussions, createdAt]
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        avatarUrl:
+          type: string
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        reputationPoints:
+          type: integer
+        reputationTier:
+          type: string
+        nationCode:
+          type: ["string", "null"]
+      required: [id, username, reputationPoints, reputationTier]
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user:
+          $ref: "#/components/schemas/UserSummary"
+        totalVotes:
+          type: integer
+        totalReactions:
+          type: integer
+        predictionAccuracy:
+          type: ["number", "null"]
+      required: [rank, user, totalVotes, totalReactions]
+
+    GlobalStats:
+      type: object
+      properties:
+        totalFans:
+          type: integer
+        totalVotesCast:
+          type: integer
+        totalNationsActive:
+          type: integer
+        totalMatchesCovered:
+          type: integer
+        totalDiscussions:
+          type: integer
+        mostActivatedNation:
+          type: ["string", "null"]
+        liveMatchCount:
+          type: integer
+      required: [totalFans, totalVotesCast, totalNationsActive, totalMatchesCovered, totalDiscussions, liveMatchCount]
+
+    # ── Nation ────────────────────────────────────────────────────────────
+    Nation:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        flagEmoji:
+          type: string
+        confederation:
+          type: string
+        memberCount:
+          type: integer
+        confidenceScore:
+          type: ["number", "null"]
+      required: [code, name, flagEmoji, confederation, memberCount]
+
+    NationDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        flagEmoji:
+          type: string
+        confederation:
+          type: string
+        memberCount:
+          type: integer
+        confidenceScore:
+          type: ["number", "null"]
+        recentMatches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Match"
+        upcomingMatches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Match"
+        isUserMember:
+          type: boolean
+      required: [code, name, flagEmoji, confederation, memberCount, recentMatches, upcomingMatches, isUserMember]
+
+    NationPulse:
+      type: object
+      properties:
+        nationCode:
+          type: string
+        nationName:
+          type: string
+        overallConfidence:
+          type: number
+        winConfidence:
+          type: number
+        drawConfidence:
+          type: number
+        lossConfidence:
+          type: number
+        sentimentScore:
+          type: number
+        totalVoters:
+          type: integer
+        recentTrend:
+          type: string
+          enum: [rising, stable, falling]
+        matchPulses:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatchPulseSummary"
+        topContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserSummary"
+      required: [nationCode, nationName, overallConfidence, winConfidence, drawConfidence, lossConfidence, sentimentScore, totalVoters, recentTrend, matchPulses, topContributors]
+
+    MatchPulseSummary:
+      type: object
+      properties:
+        matchId:
+          type: integer
+        homeNation:
+          type: string
+        awayNation:
+          type: string
+        homeConfidence:
+          type: number
+        awayConfidence:
+          type: number
+        totalVoters:
+          type: integer
+        scheduledAt:
+          type: string
+      required: [matchId, homeNation, awayNation, homeConfidence, awayConfidence, totalVoters, scheduledAt]
+
+    # ── Match ─────────────────────────────────────────────────────────────
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        homeNationCode:
+          type: string
+        homeNationName:
+          type: string
+        homeNationFlag:
+          type: string
+        awayNationCode:
+          type: string
+        awayNationName:
+          type: string
+        awayNationFlag:
+          type: string
+        competition:
+          type: string
+        stage:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [upcoming, live, completed]
+        scheduledAt:
+          type: string
+        homeScore:
+          type: ["integer", "null"]
+        awayScore:
+          type: ["integer", "null"]
+        totalVoters:
+          type: integer
+        homeConfidence:
+          type: ["number", "null"]
+        awayConfidence:
+          type: ["number", "null"]
+      required: [id, homeNationCode, homeNationName, homeNationFlag, awayNationCode, awayNationName, awayNationFlag, competition, status, scheduledAt, totalVoters]
+
+    MatchDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        homeNationCode:
+          type: string
+        homeNationName:
+          type: string
+        homeNationFlag:
+          type: string
+        awayNationCode:
+          type: string
+        awayNationName:
+          type: string
+        awayNationFlag:
+          type: string
+        competition:
+          type: string
+        stage:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [upcoming, live, completed]
+        scheduledAt:
+          type: string
+        homeScore:
+          type: ["integer", "null"]
+        awayScore:
+          type: ["integer", "null"]
+        polls:
+          type: array
+          items:
+            $ref: "#/components/schemas/Poll"
+        pulse:
+          $ref: "#/components/schemas/MatchPulse"
+        reactionSummary:
+          $ref: "#/components/schemas/ReactionSummary"
+      required: [id, homeNationCode, homeNationName, homeNationFlag, awayNationCode, awayNationName, awayNationFlag, competition, status, scheduledAt, polls]
+
+    MatchPulse:
+      type: object
+      properties:
+        matchId:
+          type: integer
+        homeNationCode:
+          type: string
+        awayNationCode:
+          type: string
+        homeWinConfidence:
+          type: number
+        drawConfidence:
+          type: number
+        awayWinConfidence:
+          type: number
+        homeExpectedGoals:
+          type: number
+        awayExpectedGoals:
+          type: number
+        fanMoodScore:
+          type: number
+        totalVoters:
+          type: integer
+        homeVoterCount:
+          type: integer
+        awayVoterCount:
+          type: integer
+        neutralVoterCount:
+          type: integer
+      required: [matchId, homeNationCode, awayNationCode, homeWinConfidence, drawConfidence, awayWinConfidence, homeExpectedGoals, awayExpectedGoals, fanMoodScore, totalVoters, homeVoterCount, awayVoterCount, neutralVoterCount]
+
+    # ── Polls ─────────────────────────────────────────────────────────────
+    Poll:
+      type: object
+      properties:
+        id:
+          type: integer
+        matchId:
+          type: integer
+        question:
+          type: string
+        pollType:
+          type: string
+          enum: [outcome, confidence, score_prediction, player_impact]
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/PollOption"
+        totalVotes:
+          type: integer
+        userVote:
+          type: ["string", "null"]
+        closesAt:
+          type: ["string", "null"]
+      required: [id, matchId, question, pollType, options, totalVotes]
+
+    PollOption:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        voteCount:
+          type: integer
+        percentage:
+          type: number
+      required: [value, label, voteCount, percentage]
+
+    PollVoteInput:
+      type: object
+      properties:
+        optionValue:
+          type: string
+      required: [optionValue]
+
+    # ── Reactions ─────────────────────────────────────────────────────────
+    Reaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        matchId:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        nationCode:
+          type: ["string", "null"]
+        reactionType:
+          type: string
+          enum: [ecstatic, satisfied, neutral, disappointed, devastated]
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, matchId, userId, username, reactionType, createdAt]
+
+    ReactionInput:
+      type: object
+      properties:
+        reactionType:
+          type: string
+          enum: [ecstatic, satisfied, neutral, disappointed, devastated]
+        comment:
+          type: string
+      required: [reactionType]
+
+    ReactionSummary:
+      type: object
+      properties:
+        matchId:
+          type: integer
+        total:
+          type: integer
+        ecstatic:
+          type: integer
+        satisfied:
+          type: integer
+        neutral:
+          type: integer
+        disappointed:
+          type: integer
+        devastated:
+          type: integer
+        dominantReaction:
+          type: ["string", "null"]
+        averageSentiment:
+          type: number
+      required: [matchId, total, ecstatic, satisfied, neutral, disappointed, devastated, averageSentiment]
+
+    # ── Discussions ───────────────────────────────────────────────────────
+    Discussion:
+      type: object
+      properties:
+        id:
+          type: integer
+        nationCode:
+          type: ["string", "null"]
+        matchId:
+          type: ["integer", "null"]
+        userId:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        userNationCode:
+          type: ["string", "null"]
+        reputationTier:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+          enum: [analysis, hype, prediction, reaction, history, general]
+        upvotes:
+          type: integer
+        commentCount:
+          type: integer
+        hasUserUpvoted:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, userId, username, reputationTier, title, content, category, upvotes, commentCount, hasUserUpvoted, createdAt, updatedAt]
+
+    DiscussionInput:
+      type: object
+      properties:
+        nationCode:
+          type: string
+        matchId:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+          enum: [analysis, hype, prediction, reaction, history, general]
+      required: [title, content, category]
+
+    DiscussionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        nationCode:
+          type: ["string", "null"]
+        matchId:
+          type: ["integer", "null"]
+        userId:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        userNationCode:
+          type: ["string", "null"]
+        reputationTier:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        upvotes:
+          type: integer
+        commentCount:
+          type: integer
+        hasUserUpvoted:
+          type: boolean
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, userId, username, reputationTier, title, content, category, upvotes, commentCount, hasUserUpvoted, comments, createdAt, updatedAt]
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        discussionId:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        userNationCode:
+          type: ["string", "null"]
+        reputationTier:
+          type: string
+        content:
+          type: string
+        upvotes:
+          type: integer
+        createdAt:
+          type: string
+      required: [id, discussionId, userId, username, reputationTier, content, upvotes, createdAt]
+
+    CommentInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]

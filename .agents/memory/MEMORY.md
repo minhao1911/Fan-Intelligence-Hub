@@ -1,0 +1,1 @@
+- [Clerk React Package Names](clerk-packages.md) — @clerk/react is correct client (v6); publishableKeyFromHost is in @clerk/shared/keys not @clerk/react/internal
