@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db, usersTable, nationsTable } from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -76,12 +76,11 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
   const limit = Math.min(parseInt(String(req.query.limit ?? "20"), 10) || 20, 100);
   const nationCode = typeof req.query.nationCode === "string" ? req.query.nationCode : undefined;
 
-  let query = db.select().from(usersTable).orderBy(usersTable.reputationPoints);
   const users = await db
     .select()
     .from(usersTable)
     .where(nationCode ? eq(usersTable.nationCode, nationCode) : undefined)
-    .orderBy(usersTable.reputationPoints)
+    .orderBy(desc(usersTable.reputationPoints))
     .limit(limit);
 
   const leaderboard = users.map((u, i) => ({

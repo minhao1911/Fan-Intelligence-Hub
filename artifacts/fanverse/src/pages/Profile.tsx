@@ -1,83 +1,278 @@
 import { useGetMe } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Activity, MessageSquare, Star, Trophy, Users } from "lucide-react";
+import { ReputationBadge } from "@/components/ui/ReputationBadge";
+import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote } from "lucide-react";
+
+const TIERS = [
+  { name: "Casual", minPoints: 0, maxPoints: 49 },
+  { name: "Fan", minPoints: 50, maxPoints: 199 },
+  { name: "Capo", minPoints: 200, maxPoints: 499 },
+  { name: "Ultras", minPoints: 500, maxPoints: Infinity },
+];
+
+const EARN_RULES = [
+  { action: "Cast a poll vote", points: 5, icon: <Vote className="h-4 w-4" /> },
+  { action: "Post a match reaction", points: 3, icon: <ThumbsUp className="h-4 w-4" /> },
+  { action: "Start a discussion", points: 8, icon: <MessageSquare className="h-4 w-4" /> },
+  { action: "Leave a comment", points: 2, icon: <Activity className="h-4 w-4" /> },
+  { action: "Join a nation", points: 10, icon: <Users className="h-4 w-4" /> },
+];
+
+function TierProgressBar({ points }: { points: number }) {
+  const currentTierIdx = TIERS.reduce((acc, t, i) => (points >= t.minPoints ? i : acc), 0);
+  const currentTier = TIERS[currentTierIdx];
+  const nextTier = TIERS[currentTierIdx + 1];
+
+  const isMax = !nextTier;
+  const progressPct = isMax
+    ? 100
+    : Math.min(
+        100,
+        Math.round(
+          ((points - currentTier.minPoints) /
+            (nextTier.minPoints - currentTier.minPoints)) *
+            100,
+        ),
+      );
+
+  const tierColors: Record<string, string> = {
+    Casual: "bg-slate-400",
+    Fan: "bg-sky-400",
+    Capo: "bg-violet-400",
+    Ultras: "bg-primary",
+  };
+
+  return (
+    <div className="mt-6 space-y-3">
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-muted-foreground font-medium">
+          {isMax ? (
+            <span className="text-primary font-bold">MAX TIER REACHED</span>
+          ) : (
+            <>
+              <span className="text-foreground font-bold">{nextTier.minPoints - points}</span>
+              <span className="text-muted-foreground"> pts to </span>
+              <span className="font-bold" style={{ color: "inherit" }}>{nextTier.name}</span>
+            </>
+          )}
+        </span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {isMax ? `${points} pts` : `${points} / ${nextTier.minPoints}`}
+        </span>
+      </div>
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-700 ${tierColors[currentTier.name]}`}
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TierLadder({ currentPoints }: { currentPoints: number }) {
+  const activeTierIdx = TIERS.reduce((acc, t, i) => (currentPoints >= t.minPoints ? i : acc), 0);
+
+  const tierColors: Record<string, string> = {
+    Casual: "border-slate-400/30 bg-slate-400/5",
+    Fan: "border-sky-400/30 bg-sky-400/5",
+    Capo: "border-violet-400/30 bg-violet-400/5",
+    Ultras: "border-primary/40 bg-primary/5",
+  };
+
+  const activeRing: Record<string, string> = {
+    Casual: "ring-slate-400/40",
+    Fan: "ring-sky-400/40",
+    Capo: "ring-violet-400/40",
+    Ultras: "ring-primary/40",
+  };
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {TIERS.map((tier, idx) => {
+        const isActive = idx === activeTierIdx;
+        const isUnlocked = currentPoints >= tier.minPoints;
+        return (
+          <div
+            key={tier.name}
+            className={`relative rounded-xl border p-4 transition-all ${tierColors[tier.name]} ${
+              isActive ? `ring-2 ${activeRing[tier.name]}` : ""
+            } ${!isUnlocked ? "opacity-40 grayscale" : ""}`}
+          >
+            {isActive && (
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+                <span className="bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest">
+                  Current
+                </span>
+              </div>
+            )}
+            <ReputationBadge tier={tier.name} size="sm" className="mb-3" />
+            <p className="font-mono text-xs text-muted-foreground mt-2">
+              {tier.maxPoints === Infinity
+                ? `${tier.minPoints}+ pts`
+                : `${tier.minPoints}–${tier.maxPoints} pts`}
+            </p>
+            {!isUnlocked && (
+              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wide">Locked</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Profile() {
   const { data: user, isLoading } = useGetMe();
 
   if (isLoading) {
-    return <div className="space-y-8 animate-pulse">
-      <div className="h-64 bg-card rounded-2xl"></div>
-      <div className="grid grid-cols-3 gap-6"><div className="h-32 bg-card rounded-xl"></div></div>
-    </div>;
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="h-64 bg-card rounded-2xl" />
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-28 bg-card rounded-xl" />)}
+        </div>
+      </div>
+    );
   }
 
   if (!user) return null;
 
+  const pointsByActivity = [
+    { label: "Poll Votes", value: user.totalVotes * 5, count: user.totalVotes, icon: <Vote className="h-4 w-4 text-primary" /> },
+    { label: "Reactions", value: user.totalReactions * 3, count: user.totalReactions, icon: <ThumbsUp className="h-4 w-4 text-primary" /> },
+    { label: "Discussions", value: user.totalDiscussions * 8, count: user.totalDiscussions, icon: <MessageSquare className="h-4 w-4 text-primary" /> },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <header className="mb-8">
+    <div className="space-y-10 animate-in fade-in duration-500">
+      <header>
         <h1 className="text-4xl font-heading font-bold uppercase text-foreground">My Identity</h1>
+        <p className="text-muted-foreground mt-1">Your fan profile and reputation standing.</p>
       </header>
 
       {/* Identity Card */}
       <Card className="bg-card border-border overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary/20 via-background to-background relative border-b border-border">
-          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="h-28 bg-gradient-to-r from-primary/20 via-background to-background relative border-b border-border">
+          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
         </div>
         <CardContent className="px-8 pb-8">
-          <div className="relative flex justify-between items-end -mt-16 mb-8">
-            <Avatar className="w-32 h-32 border-4 border-card rounded-xl shadow-2xl bg-muted">
+          <div className="relative flex justify-between items-end -mt-14 mb-6">
+            <Avatar className="w-28 h-28 border-4 border-card rounded-xl shadow-2xl bg-muted">
               <AvatarImage src={user.avatarUrl || undefined} className="object-cover" />
               <AvatarFallback className="font-heading text-4xl bg-muted text-muted-foreground">
                 {user.username.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <Badge variant="outline" className="text-primary border-primary/50 bg-primary/5 px-4 py-1.5 font-heading uppercase text-sm tracking-widest rounded">
-              {user.reputationTier}
-            </Badge>
+            <ReputationBadge tier={user.reputationTier} size="lg" />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <h2 className="text-3xl font-heading font-bold text-foreground">{user.username}</h2>
-            <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-              <span className="uppercase tracking-widest text-sm font-semibold">Allegiance:</span>
-              <span className="text-foreground font-bold">{user.nationName || "Unaffiliated Global Fan"}</span>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="uppercase tracking-widest text-xs font-semibold">Allegiance:</span>
+              <span className="text-foreground font-bold text-sm">{user.nationName || "Unaffiliated Global Fan"}</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-4 font-mono">
+            <p className="text-xs text-muted-foreground font-mono pt-1">
               Joined {new Date(user.createdAt).toLocaleDateString()}
             </p>
           </div>
+
+          {/* Tier Progress */}
+          <TierProgressBar points={user.reputationPoints} />
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <h3 className="text-2xl font-heading font-bold uppercase mt-12 mb-6 text-foreground flex items-center gap-2">
-        <Activity className="text-primary h-6 w-6" /> Fan Analytics
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Reputation" value={user.reputationPoints.toLocaleString()} icon={<Star className="text-primary h-5 w-5" />} />
-        <StatCard title="Pulse Votes" value={user.totalVotes.toLocaleString()} icon={<Activity className="text-primary h-5 w-5" />} />
-        <StatCard title="Reactions" value={user.totalReactions.toLocaleString()} icon={<Users className="text-primary h-5 w-5" />} />
-        <StatCard title="Discussions" value={user.totalDiscussions.toLocaleString()} icon={<MessageSquare className="text-primary h-5 w-5" />} />
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard title="Reputation" value={user.reputationPoints.toLocaleString()} sub="total pts" icon={<Star className="text-primary h-5 w-5" />} highlight />
+        <StatCard title="Poll Votes" value={user.totalVotes.toLocaleString()} sub="+5 pts each" icon={<Vote className="text-primary h-5 w-5" />} />
+        <StatCard title="Reactions" value={user.totalReactions.toLocaleString()} sub="+3 pts each" icon={<ThumbsUp className="text-primary h-5 w-5" />} />
+        <StatCard title="Discussions" value={user.totalDiscussions.toLocaleString()} sub="+8 pts each" icon={<MessageSquare className="text-primary h-5 w-5" />} />
       </div>
 
+      {/* Tier Ladder */}
+      <section>
+        <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+          <Zap className="text-primary h-5 w-5" /> Reputation Tiers
+        </h3>
+        <TierLadder currentPoints={user.reputationPoints} />
+      </section>
+
+      {/* Points Breakdown */}
+      <section>
+        <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+          <Activity className="text-primary h-5 w-5" /> Points Breakdown
+        </h3>
+        <Card className="bg-card border-border">
+          <CardContent className="p-6 space-y-4">
+            {pointsByActivity.map((item) => (
+              <div key={item.label} className="flex items-center gap-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {item.icon}
+                  <span className="text-sm font-medium text-foreground">{item.label}</span>
+                  <span className="text-xs text-muted-foreground">×{item.count}</span>
+                </div>
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary/60 rounded-full"
+                    style={{
+                      width: user.reputationPoints > 0
+                        ? `${Math.min(100, Math.round((item.value / user.reputationPoints) * 100))}%`
+                        : "0%",
+                    }}
+                  />
+                </div>
+                <span className="font-mono text-sm font-bold text-foreground w-12 text-right">
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* How to Earn */}
+      <section>
+        <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+          <ChevronRight className="text-primary h-5 w-5" /> How to Earn Points
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {EARN_RULES.map((rule) => (
+            <div
+              key={rule.action}
+              className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-primary/20 transition-colors"
+            >
+              <div className="text-primary">{rule.icon}</div>
+              <span className="flex-1 text-sm text-foreground">{rule.action}</span>
+              <span className="font-heading font-bold text-primary text-lg">+{rule.points}</span>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
 
-function StatCard({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) {
+function StatCard({
+  title, value, sub, icon, highlight,
+}: {
+  title: string;
+  value: string | number;
+  sub: string;
+  icon: React.ReactNode;
+  highlight?: boolean;
+}) {
   return (
-    <Card className="bg-card border-border hover:border-primary/30 transition-colors">
-      <CardContent className="p-6 flex flex-col justify-between h-full">
-        <div className="flex justify-between items-start mb-4">
+    <Card className={`border-border hover:border-primary/30 transition-colors ${highlight ? "bg-primary/5 border-primary/20" : "bg-card"}`}>
+      <CardContent className="p-5 flex flex-col gap-3">
+        <div className="flex justify-between items-start">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{title}</p>
           {icon}
         </div>
-        <h3 className="text-4xl font-heading font-bold text-foreground">{value}</h3>
+        <h3 className={`text-3xl font-heading font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</h3>
+        <p className="text-xs text-muted-foreground">{sub}</p>
       </CardContent>
     </Card>
   );

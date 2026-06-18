@@ -214,7 +214,7 @@ router.get("/nations/:code/pulse", async (req, res): Promise<void> => {
     .select()
     .from(usersTable)
     .where(eq(usersTable.nationCode, code.toUpperCase()))
-    .orderBy(usersTable.reputationPoints)
+    .orderBy(sql`${usersTable.reputationPoints} DESC`)
     .limit(5);
 
   const confidence = nation.confidenceScore ?? 60;
@@ -247,7 +247,7 @@ router.get("/nations/:code/members", async (req, res): Promise<void> => {
     .select()
     .from(usersTable)
     .where(eq(usersTable.nationCode, code.toUpperCase()))
-    .orderBy(usersTable.reputationPoints)
+    .orderBy(sql`${usersTable.reputationPoints} DESC`)
     .limit(20);
 
   res.json(members.map(u => ({
