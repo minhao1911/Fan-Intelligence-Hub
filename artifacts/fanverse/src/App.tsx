@@ -22,6 +22,7 @@ import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
 import Predictions from "./pages/Predictions";
 import Admin from "./pages/Admin";
+import MatchPredictionStats from "./pages/MatchPredictionStats";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -193,6 +194,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/match-stats/:matchId" component={MatchPredictionStats} />
           <Route path="/:rest*" component={AuthenticatedApp} />
         </Switch>
       </QueryClientProvider>

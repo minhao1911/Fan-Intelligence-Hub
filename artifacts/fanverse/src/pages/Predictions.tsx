@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@clerk/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { getBaseUrl } from "@/lib/api";
 import {
   Zap, Target, CheckCircle2, Clock, Lock, TrendingUp,
-  XCircle, Trophy, History, LayoutGrid, AlertCircle,
+  XCircle, Trophy, History, LayoutGrid, AlertCircle, BarChart2,
 } from "lucide-react";
 
 type Outcome = "home" | "draw" | "away";
@@ -331,6 +332,16 @@ function MatchPredictionCard({ match }: { match: UpcomingMatch }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Stats link footer */}
+      <div className="border-t border-border/30 px-4 py-2 flex justify-end">
+        <Link href={`/match-stats/${match.id}`}>
+          <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors font-bold uppercase tracking-widest">
+            <BarChart2 className="h-3 w-3" />
+            Community Stats
+          </button>
+        </Link>
       </div>
     </div>
   );

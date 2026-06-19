@@ -509,6 +509,115 @@ router.get("/matches/:matchId/predictions/summary", async (req, res): Promise<vo
   });
 });
 
+// ── Public prediction stats (shareable) ──────────────────────────────────────
+router.get("/matches/:matchId/predictions/stats", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
+  const matchId = parseInt(raw, 10);
+
+  const [match] = await db.select().from(matchesTable).where(eq(matchesTable.id, matchId));
+  if (!match) { res.status(404).json({ error: "Match not found" }); return; }
+
+  const [homeNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, match.homeNationCode));
+  const [awayNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, match.awayNationCode));
+
+  const preds = await db
+    .select()
+    .from(matchPredictionsTable)
+    .where(eq(matchPredictionsTable.matchId, matchId))
+    .orderBy(matchPredictionsTable.createdAt);
+
+  const total = preds.length;
+  const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+  const homeCount = preds.filter((p) => p.predictedOutcome === "home").length;
+  const drawCount = preds.filter((p) => p.predictedOutcome === "draw").length;
+  const awayCount = preds.filter((p) => p.predictedOutcome === "away").length;
+
+  // Top scorelines (only where both scores were entered)
+  const scoredPreds = preds.filter((p) => p.predictedHomeScore != null && p.predictedAwayScore != null);
+  const scoreMap = new Map<string, { homeScore: number; awayScore: number; outcome: string; count: number }>();
+  for (const p of scoredPreds) {
+    const key = `${p.predictedHomeScore}-${p.predictedAwayScore}`;
+    const existing = scoreMap.get(key);
+    const outcome = p.predictedHomeScore! > p.predictedAwayScore! ? "home"
+      : p.predictedHomeScore! < p.predictedAwayScore! ? "away" : "draw";
+    if (existing) existing.count++;
+    else scoreMap.set(key, { homeScore: p.predictedHomeScore!, awayScore: p.predictedAwayScore!, outcome, count: 1 });
+  }
+  const topScorelines = [...scoreMap.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
+    .map((s) => ({ ...s, pct: scoredPreds.length > 0 ? Math.round((s.count / scoredPreds.length) * 100) : 0 }));
+
+  // Trend: bucket predictions by day (relative to match scheduledAt)
+  const matchDate = match.scheduledAt;
+  const bucketMap = new Map<string, { label: string; homeCount: number; drawCount: number; awayCount: number; order: number }>();
+  for (const p of preds) {
+    const d = new Date(p.createdAt);
+    const dayKey = d.toISOString().slice(0, 10);
+    if (!bucketMap.has(dayKey)) {
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      bucketMap.set(dayKey, { label, homeCount: 0, drawCount: 0, awayCount: 0, order: d.getTime() });
+    }
+    const b = bucketMap.get(dayKey)!;
+    if (p.predictedOutcome === "home") b.homeCount++;
+    else if (p.predictedOutcome === "draw") b.drawCount++;
+    else b.awayCount++;
+  }
+  const trend = [...bucketMap.values()].sort((a, b) => a.order - b.order);
+
+  // Top predictors (for completed matches: show correct/exact; for upcoming: show early birds)
+  let topPredictors: any[] = [];
+  if (total > 0) {
+    const limit = match.status === "completed" ? 6 : 5;
+    const relevant = match.status === "completed"
+      ? preds.filter((p) => p.isResolved === 1).sort((a, b) => (b.xpEarned ?? 0) - (a.xpEarned ?? 0)).slice(0, limit)
+      : preds.slice(0, limit); // early birds
+
+    if (relevant.length > 0) {
+      const userIds = relevant.map((p) => p.userId);
+      const users = await db.select().from(usersTable).where(sql`${usersTable.id} = ANY(ARRAY[${sql.raw(userIds.map((id) => `'${id}'`).join(","))}])`);
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      topPredictors = relevant.map((p) => {
+        const u = userMap.get(p.userId);
+        return {
+          username: u?.username ?? "Fan",
+          nationCode: u?.nationCode ?? null,
+          reputationTier: u?.reputationPoints != null ? getReputationTier(u.reputationPoints) : "fan",
+          predictedOutcome: p.predictedOutcome,
+          predictedHomeScore: p.predictedHomeScore,
+          predictedAwayScore: p.predictedAwayScore,
+          isCorrect: p.isResolved === 1,
+          isExact: p.isResolved === 1 && p.predictedHomeScore === match.homeScore && p.predictedAwayScore === match.awayScore,
+          xpEarned: p.xpEarned ?? 5,
+        };
+      });
+    }
+  }
+
+  res.json({
+    match: {
+      id: match.id,
+      homeNationCode: match.homeNationCode,
+      homeNationName: homeNation?.name ?? match.homeNationCode,
+      homeNationFlag: homeNation?.flagEmoji ?? "🏳️",
+      awayNationCode: match.awayNationCode,
+      awayNationName: awayNation?.name ?? match.awayNationCode,
+      awayNationFlag: awayNation?.flagEmoji ?? "🏳️",
+      stage: match.stage,
+      scheduledAt: match.scheduledAt,
+      status: match.status,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+    },
+    community: { total, homeCount, drawCount, awayCount, homePct: pct(homeCount), drawPct: pct(drawCount), awayPct: pct(awayCount) },
+    topScorelines,
+    trend,
+    topPredictors,
+    scoredCount: scoredPreds.length,
+  });
+});
+
 // ── Resolve a match and settle all predictions ──────────────────────────────
 // POST /api/matches/:matchId/resolve  { homeScore: number, awayScore: number }
 // Protected by a simple RESOLVE_SECRET header so it can't be abused publicly.
