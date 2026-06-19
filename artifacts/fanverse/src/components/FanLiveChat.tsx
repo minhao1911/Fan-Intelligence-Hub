@@ -162,7 +162,7 @@ export default function FanLiveChat({ open, onClose, myUsername }: Props) {
   };
 
   const matchLabel = activeMatch
-    ? `${activeMatch.homeTeam.shortName} vs ${activeMatch.awayTeam.shortName}`
+    ? `${activeMatch.homeNationCode} vs ${activeMatch.awayNationCode}`
     : "World Cup 2026";
 
   return (
