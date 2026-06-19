@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
 import FanMomentCard from "@/components/FanMomentCard";
+import TopFanGroupsWidget from "@/components/TopFanGroupsWidget";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -443,6 +444,9 @@ export default function Feed() {
               </span>
             </Link>
           </div>
+
+          {/* Top Fan Groups */}
+          <TopFanGroupsWidget fanPhotos={fanPhotos} />
 
           {/* Upcoming count teaser */}
           {upcomingMatches && upcomingMatches.length > 0 && (
