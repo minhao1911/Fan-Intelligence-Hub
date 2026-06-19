@@ -275,6 +275,123 @@ export const GetNationMembersResponse = zod.array(GetNationMembersResponseItem)
 
 
 /**
+ * @summary List all public fan groups
+ */
+export const ListGroupsQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "nationCode": zod.coerce.string().optional()
+})
+
+export const ListGroupsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "coverEmoji": zod.string(),
+  "nationCode": zod.string().nullish(),
+  "creatorId": zod.number(),
+  "memberCount": zod.number(),
+  "isPublic": zod.boolean(),
+  "isUserMember": zod.boolean(),
+  "userRole": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListGroupsResponse = zod.array(ListGroupsResponseItem)
+
+
+/**
+ * @summary Create a new fan group
+ */
+export const CreateGroupBody = zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "coverEmoji": zod.string().optional(),
+  "nationCode": zod.string().optional(),
+  "isPublic": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Get group details and members
+ */
+export const GetGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetGroupResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "coverEmoji": zod.string(),
+  "nationCode": zod.string().nullish(),
+  "creatorId": zod.number(),
+  "memberCount": zod.number(),
+  "isPublic": zod.boolean(),
+  "isUserMember": zod.boolean(),
+  "userRole": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "nation": zod.object({
+  "code": zod.string(),
+  "name": zod.string(),
+  "flagEmoji": zod.string()
+}).nullish(),
+  "members": zod.array(zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "nationCode": zod.string().nullish(),
+  "reputationPoints": zod.number(),
+  "reputationTier": zod.string(),
+  "role": zod.string(),
+  "joinedAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Join a fan group
+ */
+export const JoinGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const JoinGroupResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "coverEmoji": zod.string(),
+  "nationCode": zod.string().nullish(),
+  "creatorId": zod.number(),
+  "memberCount": zod.number(),
+  "isPublic": zod.boolean(),
+  "isUserMember": zod.boolean(),
+  "userRole": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Leave a fan group
+ */
+export const LeaveGroupParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const LeaveGroupResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "coverEmoji": zod.string(),
+  "nationCode": zod.string().nullish(),
+  "creatorId": zod.number(),
+  "memberCount": zod.number(),
+  "isPublic": zod.boolean(),
+  "isUserMember": zod.boolean(),
+  "userRole": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List upcoming and recent matches
  */
 export const listMatchesQueryLimitDefault = 20;

@@ -6,6 +6,7 @@ import matchesRouter from "./matches";
 import discussionsRouter from "./discussions";
 import statsRouter from "./stats";
 import fixturesRouter from "./fixtures";
+import groupsRouter from "./groups";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(matchesRouter);
 router.use(discussionsRouter);
 router.use(statsRouter);
 router.use(fixturesRouter);
+router.use(groupsRouter);
 
 export default router;

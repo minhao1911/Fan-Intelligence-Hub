@@ -386,6 +386,71 @@ export interface CommentInput {
   content: string;
 }
 
+export interface Group {
+  id: number;
+  name: string;
+  description: string;
+  coverEmoji: string;
+  /** @nullable */
+  nationCode?: string | null;
+  creatorId: number;
+  memberCount: number;
+  isPublic: boolean;
+  isUserMember: boolean;
+  /** @nullable */
+  userRole?: string | null;
+  createdAt: string;
+}
+
+/**
+ * @nullable
+ */
+export type GroupDetailNation = {
+  code: string;
+  name: string;
+  flagEmoji: string;
+} | null;
+
+export interface GroupMember {
+  id: number;
+  username: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  /** @nullable */
+  nationCode?: string | null;
+  reputationPoints: number;
+  reputationTier: string;
+  role: string;
+  joinedAt: string;
+}
+
+export interface GroupDetail {
+  id: number;
+  name: string;
+  description: string;
+  coverEmoji: string;
+  /** @nullable */
+  nationCode?: string | null;
+  creatorId: number;
+  memberCount: number;
+  isPublic: boolean;
+  isUserMember: boolean;
+  /** @nullable */
+  userRole?: string | null;
+  createdAt: string;
+  /** @nullable */
+  nation?: GroupDetailNation;
+  members: GroupMember[];
+}
+
+export interface GroupInput {
+  name: string;
+  description: string;
+  coverEmoji?: string;
+  nationCode?: string;
+  isPublic?: boolean;
+}
+
 export type GetLeaderboardParams = {
 nationCode?: string;
 limit?: number;
@@ -394,6 +459,11 @@ limit?: number;
 export type ListNationsParams = {
 search?: string;
 confederation?: string;
+};
+
+export type ListGroupsParams = {
+search?: string;
+nationCode?: string;
 };
 
 export type ListMatchesParams = {

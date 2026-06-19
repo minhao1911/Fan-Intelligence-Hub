@@ -23,6 +23,8 @@ tags:
     description: User profile and reputation
   - name: pulse
     description: Nation Pulse analytics
+  - name: groups
+    description: Fan group operations
 
 paths:
   /healthz:
@@ -238,6 +240,113 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserSummary"
+
+  # ─── GROUPS ───────────────────────────────────────────────────────────────
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List all public fan groups
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: nationCode
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a new fan group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupInput"
+      responses:
+        "201":
+          description: Created group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "401":
+          description: Unauthorized
+
+  /groups/{id}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Get group details and members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupDetail"
+        "404":
+          description: Group not found
+
+  /groups/{id}/join:
+    post:
+      operationId: joinGroup
+      tags: [groups]
+      summary: Join a fan group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Joined group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "401":
+          description: Unauthorized
+
+  /groups/{id}/leave:
+    post:
+      operationId: leaveGroup
+      tags: [groups]
+      summary: Leave a fan group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Left group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "401":
+          description: Unauthorized
 
   # ─── MATCHES ──────────────────────────────────────────────────────────────
   /matches:
@@ -1091,3 +1200,108 @@ components:
         content:
           type: string
       required: [content]
+
+    # ── Groups ────────────────────────────────────────────────────────────
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        coverEmoji:
+          type: string
+        nationCode:
+          type: ["string", "null"]
+        creatorId:
+          type: integer
+        memberCount:
+          type: integer
+        isPublic:
+          type: boolean
+        isUserMember:
+          type: boolean
+        userRole:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, name, description, coverEmoji, creatorId, memberCount, isPublic, isUserMember, createdAt]
+
+    GroupDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        coverEmoji:
+          type: string
+        nationCode:
+          type: ["string", "null"]
+        creatorId:
+          type: integer
+        memberCount:
+          type: integer
+        isPublic:
+          type: boolean
+        isUserMember:
+          type: boolean
+        userRole:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        nation:
+          type: ["object", "null"]
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+            flagEmoji:
+              type: string
+          required: [code, name, flagEmoji]
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupMember"
+      required: [id, name, description, coverEmoji, creatorId, memberCount, isPublic, isUserMember, createdAt, members]
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        nationCode:
+          type: ["string", "null"]
+        reputationPoints:
+          type: integer
+        reputationTier:
+          type: string
+        role:
+          type: string
+        joinedAt:
+          type: string
+      required: [id, username, reputationPoints, reputationTier, role, joinedAt]
+
+    GroupInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        coverEmoji:
+          type: string
+        nationCode:
+          type: string
+        isPublic:
+          type: boolean
+      required: [name, description]

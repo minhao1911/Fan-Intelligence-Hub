@@ -18,6 +18,8 @@ import DiscussionDetail from "./pages/DiscussionDetail";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Fixtures from "./pages/Fixtures";
+import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -142,6 +144,8 @@ function AuthenticatedApp() {
             <Route path="/matches/:id" component={MatchDetail} />
             <Route path="/nations" component={Nations} />
             <Route path="/nations/:code" component={NationDetail} />
+            <Route path="/groups" component={Groups} />
+            <Route path="/groups/:id" component={GroupDetail} />
             <Route path="/discussions" component={Discussions} />
             <Route path="/discussions/:id" component={DiscussionDetail} />
             <Route path="/leaderboard" component={Leaderboard} />
