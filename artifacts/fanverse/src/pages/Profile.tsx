@@ -1,12 +1,18 @@
-import { useGetMe } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useGetMe, useUpdateMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@clerk/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
-import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote, Target, CheckCircle2, XCircle, Clock, Flag } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote, Target, CheckCircle2, XCircle, Clock, Flag, Pencil, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { getBaseUrl } from "@/lib/api";
+import { toast } from "sonner";
 
 const TIERS = [
   { name: "Casual", minPoints: 0, maxPoints: 49 },
@@ -335,7 +341,110 @@ function AllegianceSection({ nationCode, nationName }: { nationCode: string | nu
   );
 }
 
+function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data: user } = useGetMe();
+  const queryClient = useQueryClient();
+  const { mutate, isPending } = useUpdateMe({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        toast.success("Profile updated!");
+        onClose();
+      },
+      onError: () => toast.error("Failed to save changes."),
+    },
+  });
+
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  // Sync fields when dialog opens with current values
+  const handleOpenChange = (o: boolean) => {
+    if (o && user) {
+      setUsername(user.username ?? "");
+      setAvatarUrl(user.avatarUrl ?? "");
+    }
+    if (!o) onClose();
+  };
+
+  const handleSave = () => {
+    const body: { username?: string; avatarUrl?: string } = {};
+    if (username.trim() && username.trim() !== user?.username) body.username = username.trim();
+    if (avatarUrl.trim() !== (user?.avatarUrl ?? "")) body.avatarUrl = avatarUrl.trim() || undefined;
+    mutate({ data: body });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md bg-card border-border text-foreground">
+        <DialogHeader>
+          <DialogTitle className="font-heading uppercase tracking-widest text-base">Edit Profile</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          {/* Avatar preview */}
+          <div className="flex items-center gap-4">
+            <Avatar className="w-16 h-16 border-2 border-border rounded-xl bg-muted shrink-0">
+              <AvatarImage src={avatarUrl || undefined} className="object-cover" />
+              <AvatarFallback className="font-heading text-2xl bg-muted text-muted-foreground">
+                {(username || user?.username || "?").substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="font-bold text-sm text-foreground truncate">{username || user?.username}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Avatar preview</p>
+            </div>
+          </div>
+
+          {/* Username */}
+          <div className="space-y-1.5">
+            <Label htmlFor="ep-username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Username
+            </Label>
+            <Input
+              id="ep-username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={user?.username ?? ""}
+              className="bg-background border-border text-foreground text-sm h-9"
+              maxLength={40}
+            />
+          </div>
+
+          {/* Avatar URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="ep-avatar" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Avatar URL <span className="normal-case font-normal text-muted-foreground/50 tracking-normal">(optional)</span>
+            </Label>
+            <Input
+              id="ep-avatar"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+              placeholder="https://…"
+              className="bg-background border-border text-foreground text-sm h-9 font-mono"
+            />
+            <p className="text-[10px] text-muted-foreground">Paste any public image URL to use as your avatar.</p>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-1">
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isPending}
+            className="border-border text-muted-foreground hover:text-foreground">
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={isPending}
+            className="font-heading uppercase tracking-wide text-xs">
+            {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+            {isPending ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Profile() {
+  const [editOpen, setEditOpen] = useState(false);
   const { data: user, isLoading } = useGetMe();
 
   if (isLoading) {
@@ -377,7 +486,17 @@ export default function Profile() {
                 {user.username.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <ReputationBadge tier={user.reputationTier} size="lg" />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setEditOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background/60 hover:bg-muted hover:border-primary/30 transition-all text-xs font-bold text-muted-foreground hover:text-foreground uppercase tracking-wide"
+                title="Edit profile"
+              >
+                <Pencil className="h-3 w-3" />
+                Edit
+              </button>
+              <ReputationBadge tier={user.reputationTier} size="lg" />
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -469,6 +588,8 @@ export default function Profile() {
           ))}
         </div>
       </section>
+
+      <EditProfileDialog open={editOpen} onClose={() => setEditOpen(false)} />
     </div>
   );
 }
