@@ -19,6 +19,7 @@ import TopFanGroupsWidget from "@/components/TopFanGroupsWidget";
 import FanOfTheMatch from "@/components/FanOfTheMatch";
 import MatchDayCountdown from "@/components/MatchDayCountdown";
 import HotTakeStrip from "@/components/HotTakeStrip";
+import NationRivalryCard from "@/components/NationRivalryCard";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -132,6 +133,9 @@ export default function Feed() {
 
           {/* Hot Take strip — most upvoted fan take, cycles every 5s */}
           <HotTakeStrip />
+
+          {/* Nation Rivalry — highest vs lowest confidence, live vote split */}
+          <NationRivalryCard />
 
           {/* Prediction prompt box */}
           <div className="bg-card border border-border rounded-xl p-5">
