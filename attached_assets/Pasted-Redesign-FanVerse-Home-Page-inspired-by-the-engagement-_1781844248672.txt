@@ -1,0 +1,189 @@
+Redesign FanVerse Home Page inspired by the engagement flow of Facebook, but with a unique football fan experience.
+
+HOME PAGE OBJECTIVE
+
+The Home Page should feel alive, active, and community-driven.
+
+Users should immediately see fan activity, nation discussions, confidence polls, match reactions, and trending conversations.
+
+Do NOT clone Facebook UI.
+
+Create a premium football fan platform inspired by Facebook's feed structure.
+
+HOME LAYOUT
+
+Top Navigation:
+
+- FanVerse Logo
+- Search
+- Notifications
+- Messages
+- User Profile
+
+Below Header:
+
+Display user's Nation Card
+
+Example:
+
+Argentina Nation
+Confidence: 84%
+Nation Rank: #2
+Members Online: 1,254
+
+Quick Actions:
+
+- Create Post
+- Match Reaction
+- Confidence Poll
+- Upload Photo
+- Start Discussion
+
+MAIN FEED
+
+Infinite scrolling feed.
+
+Feed should contain:
+
+1. Fan Posts
+
+Example:
+
+Samuel
+Argentina Fan
+
+"I think Argentina will dominate possession against France."
+
+2. Match Reactions
+
+Example:
+
+Argentina Fans
+
+82% feel confident before tonight's match.
+
+3. Nation Discussions
+
+Example:
+
+Should Messi's World Cup legacy be considered the greatest ever?
+
+4. Confidence Polls
+
+Example:
+
+Will Brazil defeat Germany?
+
+Yes
+No
+
+5. Fan Photos
+
+Photos from supporters.
+
+6. Trending Topics
+
+Top discussions from all nations.
+
+POST CARD DESIGN
+
+Each post should display:
+
+- Profile Photo
+- Username
+- Nation Badge
+- Reputation Score
+- Timestamp
+- Post Content
+- Images or Videos
+
+Actions:
+
+❤️ Support
+
+⚽ Agree
+
+🔥 Hot Take
+
+💬 Comment
+
+🔄 Share
+
+⭐ Save
+
+COMMENTS
+
+Nested comment system.
+
+Display nation badges beside commenters.
+
+Example:
+
+Brazil Fan
+
+Argentina Fan
+
+France Fan
+
+VISUAL STYLE
+
+Premium dark theme.
+
+Football atmosphere.
+
+Subtle stadium lighting.
+
+Glassmorphism cards.
+
+Smooth animations.
+
+National flags integrated throughout UI.
+
+No Facebook colors.
+
+No Facebook branding.
+
+Create a unique FanVerse identity.
+
+HOME FEED ALGORITHM
+
+Prioritize:
+
+1. Nation Posts
+2. Match Reactions
+3. Confidence Polls
+4. Trending Discussions
+5. Global Fan Activity
+
+NATION PULSE PANEL
+
+Sticky card near top:
+
+Nation Pulse
+
+Confidence
+Momentum
+Activity
+Sentiment
+
+Updated in real-time.
+
+MOBILE EXPERIENCE
+
+Primary target:
+
+Android
+
+Bottom Navigation:
+
+Home
+Nations
+Matches
+Pulse
+Profile
+
+All interactions optimized for one-hand use.
+
+FINAL GOAL
+
+The Home Page should feel like the world's largest football fan community, where every scroll reveals fan opinions, match reactions, nation sentiment, and football conversations.

@@ -1,11 +1,18 @@
 import { Link, useLocation } from "wouter";
-import { Home, Activity, CalendarDays, Globe, Trophy, User, LogOut, Menu, Star, ListOrdered, UsersRound, Target } from "lucide-react";
+import {
+  Home, Activity, CalendarDays, Globe, Trophy, User, LogOut,
+  Star, ListOrdered, UsersRound, Target, Bell, MessageSquare,
+  Search, ChevronDown
+} from "lucide-react";
 import { useClerk } from "@clerk/react";
 import { useGetMe } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -13,112 +20,191 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: user } = useGetMe();
 
   const navigation = [
-    { name: "Feed", href: "/feed", icon: Home },
-    { name: "Pulse", href: "/pulse", icon: Activity },
-    { name: "Fixtures", href: "/fixtures", icon: ListOrdered },
-    { name: "Matches", href: "/matches", icon: CalendarDays },
-    { name: "Nations", href: "/nations", icon: Globe },
-    { name: "Groups", href: "/groups", icon: UsersRound },
-    { name: "Predictions", href: "/predictions", icon: Target },
-    { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-    { name: "Profile", href: "/profile", icon: User },
+    { name: "Feed",        href: "/feed",        icon: Home },
+    { name: "Pulse",       href: "/pulse",        icon: Activity },
+    { name: "Fixtures",    href: "/fixtures",     icon: ListOrdered },
+    { name: "Matches",     href: "/matches",      icon: CalendarDays },
+    { name: "Nations",     href: "/nations",      icon: Globe },
+    { name: "Groups",      href: "/groups",       icon: UsersRound },
+    { name: "Predictions", href: "/predictions",  icon: Target },
+    { name: "Leaderboard", href: "/leaderboard",  icon: Trophy },
+    { name: "Profile",     href: "/profile",      icon: User },
   ];
 
-  const NavLinks = () => (
-    <>
-      <div className="flex items-center gap-2 px-4 py-6 border-b border-border">
-        <svg viewBox="0 0 400 400" className="w-8 h-8 text-primary shrink-0">
-          <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" strokeWidth="24" opacity="0.8"/>
-          <path d="M 200 60 L 200 340 M 60 200 L 340 200 M 100 100 L 300 300 M 100 300 L 300 100" stroke="currentColor" strokeWidth="12" opacity="0.4"/>
-        </svg>
-        <span className="font-heading text-xl font-bold text-foreground uppercase tracking-wide">FanVerse</span>
-      </div>
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
+  const mobileNav = [
+    { name: "Home",        href: "/feed",        icon: Home },
+    { name: "Nations",     href: "/nations",      icon: Globe },
+    { name: "Matches",     href: "/matches",      icon: CalendarDays },
+    { name: "Predictions", href: "/predictions",  icon: Target },
+    { name: "Profile",     href: "/profile",      icon: User },
+  ];
+
+  const primaryNav = navigation.slice(0, 7);
+  const moreNav    = navigation.slice(7);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+
+      {/* ── Top Navigation Bar ─────────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border/60 flex items-center px-3 md:px-6 gap-3">
+
+        {/* Logo */}
+        <Link href="/feed" className="flex items-center gap-2 shrink-0 mr-2">
+          <div className="relative w-8 h-8">
+            <svg viewBox="0 0 400 400" className="w-8 h-8 text-primary">
+              <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" strokeWidth="24" opacity="0.9"/>
+              <path d="M200 60 L200 340 M60 200 L340 200 M100 100 L300 300 M100 300 L300 100" stroke="currentColor" strokeWidth="12" opacity="0.45"/>
+            </svg>
+            <div className="absolute inset-0 rounded-full bg-primary/10 blur-md -z-10" />
+          </div>
+          <span className="font-heading text-lg font-bold text-foreground uppercase tracking-wide hidden sm:block">
+            Fan<span className="text-primary">Verse</span>
+          </span>
+        </Link>
+
+        {/* Primary nav — desktop */}
+        <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+          {primaryNav.map((item) => {
+            const isActive = location.startsWith(item.href);
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all duration-150 ${
+                  isActive
+                    ? "bg-primary/12 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                }`}
+              >
+                <item.icon className="h-3.5 w-3.5 shrink-0" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+
+          {/* More dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all">
+                More <ChevronDown className="h-3 w-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-card border-border">
+              {moreNav.map((item) => (
+                <DropdownMenuItem key={item.name} asChild>
+                  <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
+                    <item.icon className="h-4 w-4" />
+                    {item.name}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </nav>
+
+        {/* Spacer on tablet */}
+        <div className="flex-1 lg:hidden" />
+
+        {/* Right actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Search — md+ */}
+          <div className="relative hidden md:block mr-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              placeholder="Search FanVerse…"
+              className="w-44 xl:w-52 bg-muted border border-border rounded-full pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+            />
+          </div>
+
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground relative" asChild>
+            <Link href="/pulse">
+              <Bell className="h-4.5 w-4.5" />
+            </Link>
+          </Button>
+
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+            <Link href="/discussions">
+              <MessageSquare className="h-4.5 w-4.5" />
+            </Link>
+          </Button>
+
+          {/* Profile dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 ml-1 pl-2 pr-1 py-1 rounded-full hover:bg-muted/70 transition-colors">
+                <Avatar className="h-7 w-7 border border-border shrink-0">
+                  <AvatarImage src={user?.avatarUrl || undefined} />
+                  <AvatarFallback className="bg-muted text-muted-foreground font-heading text-[10px]">
+                    {user?.username.substring(0, 2).toUpperCase() ?? "??"}
+                  </AvatarFallback>
+                </Avatar>
+                {user && (
+                  <div className="hidden sm:flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-foreground max-w-[80px] truncate">{user.username}</span>
+                    <div className="flex items-center gap-0.5">
+                      <Star className="h-3 w-3 text-primary" />
+                      <span className="text-[10px] font-mono font-bold text-primary">{user.reputationPoints}</span>
+                    </div>
+                  </div>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 bg-card border-border">
+              {user && (
+                <>
+                  <div className="px-3 py-2 border-b border-border/50">
+                    <p className="text-sm font-bold text-foreground">{user.username}</p>
+                    <ReputationBadge tier={user.reputationTier} size="sm" className="mt-0.5" />
+                  </div>
+                </>
+              )}
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer flex items-center gap-2">
+                  <User className="h-4 w-4" /> My Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/leaderboard" className="cursor-pointer flex items-center gap-2">
+                  <Trophy className="h-4 w-4" /> Leaderboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive cursor-pointer flex items-center gap-2"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-4 w-4" /> Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      {/* ── Page content ───────────────────────────────────────── */}
+      <main className="flex-1 pt-14 pb-16 lg:pb-4">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 py-6">
+          {children}
+        </div>
+      </main>
+
+      {/* ── Mobile bottom navigation ────────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/60 flex items-stretch h-16">
+        {mobileNav.map((item) => {
           const isActive = location.startsWith(item.href);
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`group flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
               {item.name}
             </Link>
           );
         })}
       </nav>
-
-      {/* User Rep Mini-Card */}
-      {user && (
-        <Link href="/profile">
-          <div className="mx-3 mb-3 p-3 rounded-lg bg-muted/40 border border-border/50 hover:border-primary/30 hover:bg-muted/60 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8 border border-border shrink-0">
-                <AvatarImage src={user.avatarUrl || undefined} />
-                <AvatarFallback className="bg-muted text-muted-foreground font-heading text-xs">
-                  {user.username.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-foreground truncate">{user.username}</p>
-                <ReputationBadge tier={user.reputationTier} size="sm" className="mt-0.5" />
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <Star className="h-3 w-3 text-primary" />
-                <span className="text-xs font-mono font-bold text-primary">{user.reputationPoints}</span>
-              </div>
-            </div>
-          </div>
-        </Link>
-      )}
-
-      <div className="p-3 border-t border-border">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-foreground text-sm"
-          onClick={() => signOut()}
-        >
-          <LogOut className="mr-3 h-4 w-4" />
-          Log out
-        </Button>
-      </div>
-    </>
-  );
-
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Mobile sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden absolute top-4 left-4 z-50">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-card border-r border-border flex flex-col h-full">
-          <NavLinks />
-        </SheetContent>
-      </Sheet>
-
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
-        <div className="flex flex-col flex-1 min-h-0">
-          <NavLinks />
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col md:pl-64 h-[100dvh]">
-        <main className="flex-1 overflow-y-auto bg-background px-4 sm:px-6 py-16 md:py-8">
-          <div className="max-w-7xl mx-auto h-full">
-            {children}
-          </div>
-        </main>
-      </div>
     </div>
   );
 }
