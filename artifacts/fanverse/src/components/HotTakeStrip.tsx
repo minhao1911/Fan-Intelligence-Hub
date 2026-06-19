@@ -30,7 +30,8 @@ export default function HotTakeStrip() {
   const cycleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sort by upvotes desc, take top 3
-  const hot = (discussions ?? [])
+  const discussionsList = Array.isArray(discussions) ? discussions : [];
+  const hot = discussionsList
     .slice()
     .sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0))
     .slice(0, 3);
