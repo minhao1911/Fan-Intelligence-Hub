@@ -1,10 +1,13 @@
-import { useState, useMemo } from "react";
-import { useGetLeaderboard, useListNations } from "@workspace/api-client-react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useGetLeaderboard, useListNations, useListMatches } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Trophy, Medal, Award, Search, Crown, Zap, Activity, ThumbsUp } from "lucide-react";
+import {
+  Trophy, Medal, Award, Search, Crown, Zap, Activity,
+  ThumbsUp, TrendingUp, TrendingDown, Minus, Radio,
+} from "lucide-react";
 import type { LeaderboardEntry } from "@workspace/api-client-react";
 
 const TIERS = ["All", "Casual", "Fan", "Capo", "Ultras"] as const;
@@ -23,51 +26,178 @@ const RANK_META: Record<number, { icon: React.ReactNode; glow: string; label: st
   3: { icon: <Award className="h-5 w-5 text-amber-600" />,  glow: "shadow-[0_0_16px_rgba(180,83,9,0.15)]",   label: "Bronze" },
 };
 
+// ── Animated XP counter ───────────────────────────────────────────────────────
+function AnimatedXP({ value }: { value: number }) {
+  const [displayed, setDisplayed] = useState(value);
+  const prevRef = useRef(value);
+  const frameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to = value;
+    if (from === to) return;
+
+    const duration = 800;
+    const start = performance.now();
+    const animate = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayed(Math.round(from + (to - from) * eased));
+      if (t < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      } else {
+        prevRef.current = to;
+      }
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [value]);
+
+  return <>{displayed.toLocaleString()}</>;
+}
+
+// ── Rank delta badge ──────────────────────────────────────────────────────────
+function RankDelta({ delta }: { delta: number | null }) {
+  if (delta === null) return null;
+  if (delta === 0) return <Minus className="h-2.5 w-2.5 text-muted-foreground/40" />;
+  if (delta > 0) return (
+    <span className="flex items-center gap-0.5 text-[9px] font-bold text-emerald-400 leading-none">
+      <TrendingUp className="h-2.5 w-2.5" />+{delta}
+    </span>
+  );
+  return (
+    <span className="flex items-center gap-0.5 text-[9px] font-bold text-red-400 leading-none">
+      <TrendingDown className="h-2.5 w-2.5" />{delta}
+    </span>
+  );
+}
+
 export default function Leaderboard() {
   const [selectedNation, setSelectedNation] = useState<string>("all");
   const [tierFilter, setTierFilter]         = useState<TierFilter>("All");
   const [search, setSearch]                 = useState("");
+  const [flashedIds, setFlashedIds]         = useState<Set<string>>(new Set());
 
-  const { data: raw, isLoading } = useGetLeaderboard({
-    limit: 100,
-    nationCode: selectedNation === "all" ? undefined : selectedNation,
-  });
+  // Check for live matches to decide polling speed
+  const { data: liveMatches } = useListMatches(
+    { status: "live", limit: 1 },
+    { query: { refetchInterval: 10_000 } }
+  );
+  const hasLive = Array.isArray(liveMatches) && liveMatches.length > 0;
+
+  // Fast poll when live, slow otherwise
+  const { data: raw, isLoading, dataUpdatedAt } = useGetLeaderboard(
+    { limit: 100, nationCode: selectedNation === "all" ? undefined : selectedNation },
+    { query: { refetchInterval: hasLive ? 4_000 : 30_000 } }
+  );
 
   const { data: nations } = useListNations({});
 
-  // Client-side tier + search filter
-  const leaderboard: LeaderboardEntry[] = useMemo(() => {
+  // Track previous snapshot: userId → { rank, xp }
+  const prevSnapshot = useRef<Map<string, { rank: number; xp: number }>>(new Map());
+  const isFirstFetch = useRef(true);
+
+  // Compute per-entry rank delta and XP gained, detect changes for flash
+  const enriched = useMemo(() => {
     if (!raw) return [];
-    return raw.filter((e) => {
+    const prev = prevSnapshot.current;
+    const changed: string[] = [];
+
+    const result = raw.map((e, idx) => {
+      const id = e.user.id;
+      const prevEntry = prev.get(id);
+      const currentRank = idx + 1;
+      const delta = prevEntry && !isFirstFetch.current
+        ? prevEntry.rank - currentRank
+        : null;
+      const xpGained = prevEntry && !isFirstFetch.current && e.user.reputationPoints > prevEntry.xp
+        ? e.user.reputationPoints - prevEntry.xp
+        : null;
+
+      if (xpGained && xpGained > 0) changed.push(id);
+      return { ...e, rank: currentRank, delta, xpGained };
+    });
+
+    // Update snapshot
+    const newSnap = new Map<string, { rank: number; xp: number }>();
+    result.forEach((e) => newSnap.set(e.user.id, { rank: e.rank, xp: e.user.reputationPoints }));
+
+    if (!isFirstFetch.current && changed.length > 0) {
+      setFlashedIds(new Set(changed));
+      setTimeout(() => setFlashedIds(new Set()), 2000);
+    }
+
+    prevSnapshot.current = newSnap;
+    isFirstFetch.current = false;
+
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raw, dataUpdatedAt]);
+
+  // Client-side tier + search filter
+  const leaderboard = useMemo(() => {
+    return enriched.filter((e) => {
       const tierOk = tierFilter === "All" || e.user.reputationTier === tierFilter;
       const q = search.trim().toLowerCase();
       const searchOk = !q || e.user.username.toLowerCase().includes(q) || (e.user.nationCode ?? "").toLowerCase().includes(q);
       return tierOk && searchOk;
     });
-  }, [raw, tierFilter, search]);
+  }, [enriched, tierFilter, search]);
 
   const top3 = leaderboard.slice(0, 3);
   const rest  = leaderboard.slice(3);
+
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
 
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-heading font-black uppercase tracking-tight text-foreground flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <Trophy className="w-5 h-5 text-primary" />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-heading font-black uppercase tracking-tight text-foreground flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <Trophy className="w-5 h-5 text-primary" />
+            </div>
+            Fan Leaderboard
+          </h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            Top contributors ranked by reputation. Earn points by voting, discussing, and predicting.
+          </p>
+        </div>
+
+        {/* Live indicator */}
+        {hasLive && (
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-red-500/30 bg-red-500/10">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <Radio className="h-3 w-3 text-red-400" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">Live updates</span>
+            </div>
+            {lastUpdated && (
+              <span className="text-[9px] text-muted-foreground">Updated {lastUpdated}</span>
+            )}
           </div>
-          Fan Leaderboard
-        </h1>
-        <p className="text-muted-foreground mt-1.5 text-sm">
-          Top contributors ranked by reputation. Earn points by voting, discussing, and predicting.
-        </p>
+        )}
       </div>
+
+      {/* XP event banner — shows when XP was just awarded */}
+      {flashedIds.size > 0 && (
+        <div className="rounded-xl border border-primary/30 bg-primary/8 px-4 py-2.5 flex items-center gap-2.5 animate-in slide-in-from-top-2 duration-300">
+          <Zap className="h-4 w-4 text-primary shrink-0" />
+          <p className="text-sm font-bold text-primary">
+            XP just awarded — {flashedIds.size} fan{flashedIds.size !== 1 ? "s" : ""} moved up the rankings!
+          </p>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
           <Input
@@ -78,14 +208,13 @@ export default function Leaderboard() {
           />
         </div>
 
-        {/* Nation select */}
         <Select value={selectedNation} onValueChange={setSelectedNation}>
           <SelectTrigger className="w-full sm:w-48 h-9 bg-card border-border text-foreground text-sm">
             <SelectValue placeholder="All Nations" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border text-foreground max-h-72">
             <SelectItem value="all" className="focus:bg-muted/60">🌍 All Nations</SelectItem>
-            {nations?.map((n) => (
+            {Array.isArray(nations) && nations.map((n) => (
               <SelectItem key={n.code} value={n.code} className="focus:bg-muted/60">
                 {n.flagEmoji} {n.name}
               </SelectItem>
@@ -141,12 +270,9 @@ export default function Leaderboard() {
           {/* ── Podium ───────────────────────────────────── */}
           {top3.length >= 3 && !search && tierFilter === "All" && (
             <div className="grid grid-cols-3 gap-3 items-end">
-              {/* Silver - 2nd */}
-              <PodiumCard entry={top3[1]} rank={2} height="h-36" nations={nations} />
-              {/* Gold - 1st */}
-              <PodiumCard entry={top3[0]} rank={1} height="h-44" nations={nations} featured />
-              {/* Bronze - 3rd */}
-              <PodiumCard entry={top3[2]} rank={3} height="h-28" nations={nations} />
+              <PodiumCard entry={top3[1]} rank={2} height="h-36" nations={nations} flashed={flashedIds.has(top3[1].user.id)} />
+              <PodiumCard entry={top3[0]} rank={1} height="h-44" nations={nations} featured flashed={flashedIds.has(top3[0].user.id)} />
+              <PodiumCard entry={top3[2]} rank={3} height="h-28" nations={nations} flashed={flashedIds.has(top3[2].user.id)} />
             </div>
           )}
 
@@ -155,38 +281,49 @@ export default function Leaderboard() {
             {/* Column headers */}
             <div className="px-4 py-2.5 border-b border-border/60 bg-muted/20 grid grid-cols-12 gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               <div className="col-span-1 text-center">#</div>
-              <div className="col-span-5 md:col-span-5">Fan</div>
+              <div className="col-span-5 md:col-span-4">Fan</div>
               <div className="col-span-3 md:col-span-2">Tier</div>
-              <div className="hidden md:block col-span-2 text-right">Points</div>
-              <div className="hidden md:block col-span-2 text-right">Activity</div>
+              <div className="hidden md:block col-span-2 text-right">Pts</div>
+              <div className="hidden md:block col-span-2 text-right">Change</div>
+              <div className="hidden md:block col-span-1 text-right">Activity</div>
             </div>
 
             {/* Rows */}
             <div className="divide-y divide-border/40">
               {leaderboard.map((entry) => {
-                const nation = nations?.find((n) => n.code === entry.user.nationCode);
+                const nation = Array.isArray(nations) ? nations.find((n) => n.code === entry.user.nationCode) : undefined;
                 const rank = entry.rank;
                 const meta = RANK_META[rank];
+                const flashed = flashedIds.has(entry.user.id);
                 return (
                   <div
                     key={entry.user.id}
-                    className={`grid grid-cols-12 gap-2 px-4 py-3 items-center transition-colors hover:bg-muted/10 ${
-                      rank === 1 ? "bg-yellow-400/[0.03]" : rank <= 3 ? "bg-primary/[0.02]" : ""
+                    className={`grid grid-cols-12 gap-2 px-4 py-3 items-center transition-all duration-700 ${
+                      flashed
+                        ? "bg-primary/10 border-l-2 border-primary"
+                        : rank === 1
+                        ? "bg-yellow-400/[0.03]"
+                        : rank <= 3
+                        ? "bg-primary/[0.02]"
+                        : "hover:bg-muted/10"
                     }`}
                   >
                     {/* Rank */}
-                    <div className="col-span-1 flex justify-center">
+                    <div className="col-span-1 flex flex-col items-center gap-0.5">
                       {meta ? (
                         meta.icon
                       ) : (
                         <span className="font-mono text-sm font-bold text-muted-foreground/60 tabular-nums">{rank}</span>
                       )}
+                      <RankDelta delta={entry.delta ?? null} />
                     </div>
 
                     {/* Fan */}
-                    <div className="col-span-5 flex items-center gap-2.5 min-w-0">
+                    <div className="col-span-5 md:col-span-4 flex items-center gap-2.5 min-w-0">
                       <div className="relative shrink-0">
-                        <Avatar className={`h-8 w-8 border ${rank <= 3 ? "border-primary/30" : "border-border"}`}>
+                        <Avatar className={`h-8 w-8 border transition-all duration-700 ${
+                          flashed ? "border-primary/60 shadow-[0_0_8px_rgba(251,191,36,0.3)]" : rank <= 3 ? "border-primary/30" : "border-border"
+                        }`}>
                           <AvatarImage src={entry.user.avatarUrl || undefined} />
                           <AvatarFallback className="bg-muted text-muted-foreground font-heading text-[10px]">
                             {entry.user.username.substring(0, 2).toUpperCase()}
@@ -209,21 +346,33 @@ export default function Leaderboard() {
                       <ReputationBadge tier={entry.user.reputationTier} size="sm" />
                     </div>
 
-                    {/* Points */}
+                    {/* Points — animated */}
                     <div className="hidden md:flex col-span-2 justify-end items-center gap-1">
-                      <Zap className="h-3 w-3 text-primary/60 shrink-0" />
-                      <span className={`font-mono font-bold text-sm tabular-nums ${rank === 1 ? "text-primary" : "text-foreground"}`}>
-                        {entry.user.reputationPoints.toLocaleString()}
+                      <Zap className={`h-3 w-3 shrink-0 transition-colors ${flashed ? "text-primary" : "text-primary/60"}`} />
+                      <span className={`font-mono font-bold text-sm tabular-nums transition-colors ${rank === 1 ? "text-primary" : flashed ? "text-primary" : "text-foreground"}`}>
+                        <AnimatedXP value={entry.user.reputationPoints} />
                       </span>
                     </div>
 
-                    {/* Activity */}
-                    <div className="hidden md:flex col-span-2 justify-end items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-0.5">
-                        <Activity className="h-3 w-3" />{entry.totalVotes}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <ThumbsUp className="h-3 w-3" />{entry.totalReactions}
+                    {/* XP gained badge */}
+                    <div className="hidden md:flex col-span-2 justify-end items-center gap-1.5">
+                      {entry.xpGained && entry.xpGained > 0 ? (
+                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/15 border border-primary/30 text-primary text-[10px] font-bold animate-in zoom-in-75 duration-300">
+                          <Zap className="h-2.5 w-2.5" />+{entry.xpGained}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Activity className="h-3 w-3" />{entry.totalVotes}
+                          <ThumbsUp className="h-3 w-3 ml-1" />{entry.totalReactions}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Mobile XP */}
+                    <div className="md:hidden col-span-4 flex justify-end items-center gap-1">
+                      <Zap className="h-3 w-3 text-primary/60 shrink-0" />
+                      <span className="font-mono font-bold text-xs tabular-nums text-foreground">
+                        <AnimatedXP value={entry.user.reputationPoints} />
                       </span>
                     </div>
                   </div>
@@ -231,11 +380,18 @@ export default function Leaderboard() {
               })}
             </div>
 
-            {/* Footer count */}
-            <div className="px-4 py-2.5 border-t border-border/40 bg-muted/10 text-[10px] text-muted-foreground font-medium text-right">
-              Showing {leaderboard.length} fan{leaderboard.length !== 1 ? "s" : ""}
-              {selectedNation !== "all" && ` · ${nations?.find((n) => n.code === selectedNation)?.name ?? selectedNation}`}
-              {tierFilter !== "All" && ` · ${tierFilter} tier`}
+            {/* Footer */}
+            <div className="px-4 py-2.5 border-t border-border/40 bg-muted/10 flex items-center justify-between text-[10px] text-muted-foreground font-medium">
+              <span>
+                {hasLive
+                  ? "Refreshing every 4s · live match active"
+                  : "Refreshing every 30s"}
+              </span>
+              <span>
+                Showing {leaderboard.length} fan{leaderboard.length !== 1 ? "s" : ""}
+                {selectedNation !== "all" && ` · ${Array.isArray(nations) ? nations.find((n) => n.code === selectedNation)?.name ?? selectedNation : selectedNation}`}
+                {tierFilter !== "All" && ` · ${tierFilter} tier`}
+              </span>
             </div>
           </div>
         </div>
@@ -245,33 +401,45 @@ export default function Leaderboard() {
 }
 
 function PodiumCard({
-  entry, rank, height, nations, featured,
+  entry, rank, height, nations, featured, flashed,
 }: {
-  entry: LeaderboardEntry;
+  entry: LeaderboardEntry & { delta?: number | null; xpGained?: number | null };
   rank: number;
   height: string;
   nations: Array<{ code: string; flagEmoji: string; name: string }> | undefined;
   featured?: boolean;
+  flashed?: boolean;
 }) {
   const meta = RANK_META[rank];
-  const nation = nations?.find((n) => n.code === entry.user.nationCode);
+  const nation = Array.isArray(nations) ? nations.find((n) => n.code === entry.user.nationCode) : undefined;
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-end rounded-2xl border p-4 pb-5 ${height} overflow-hidden transition-all ${
-        featured
+      className={`relative flex flex-col items-center justify-end rounded-2xl border p-4 pb-5 ${height} overflow-hidden transition-all duration-700 ${
+        flashed
+          ? "bg-primary/10 border-primary/40 shadow-[0_0_20px_rgba(251,191,36,0.15)]"
+          : featured
           ? `bg-primary/5 border-primary/25 ${meta.glow}`
           : "bg-card border-border"
       }`}
     >
-      {featured && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
+      {(featured || flashed) && (
+        <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent ${flashed ? "opacity-100" : "opacity-60"}`} />
       )}
 
       <div className="flex flex-col items-center gap-1.5 z-10 w-full">
-        <div className="mb-1">{meta.icon}</div>
+        <div className="mb-1 relative">
+          {meta.icon}
+          {entry.xpGained && entry.xpGained > 0 && (
+            <span className="absolute -top-1 -right-3 text-[9px] font-bold text-primary bg-primary/15 border border-primary/30 px-1 rounded-full animate-in zoom-in-75 duration-300">
+              +{entry.xpGained}
+            </span>
+          )}
+        </div>
 
-        <Avatar className={`border-2 ${featured ? "h-12 w-12 border-primary/40" : "h-10 w-10 border-border"}`}>
+        <Avatar className={`border-2 transition-all duration-700 ${
+          flashed ? "h-12 w-12 border-primary shadow-[0_0_12px_rgba(251,191,36,0.3)]" : featured ? "h-12 w-12 border-primary/40" : "h-10 w-10 border-border"
+        }`}>
           <AvatarImage src={entry.user.avatarUrl || undefined} />
           <AvatarFallback className="bg-muted text-muted-foreground font-heading text-xs">
             {entry.user.username.substring(0, 2).toUpperCase()}
@@ -286,9 +454,14 @@ function PodiumCard({
           {entry.user.username}
         </p>
 
-        <p className={`font-mono font-black tabular-nums leading-none ${featured ? "text-primary text-base" : "text-sm text-muted-foreground"}`}>
-          {entry.user.reputationPoints.toLocaleString()}
-        </p>
+        <div className="flex items-center gap-1">
+          <p className={`font-mono font-black tabular-nums leading-none ${featured || flashed ? "text-primary text-base" : "text-sm text-muted-foreground"}`}>
+            <AnimatedXP value={entry.user.reputationPoints} />
+          </p>
+          {entry.delta !== null && entry.delta !== undefined && entry.delta !== 0 && (
+            <RankDelta delta={entry.delta} />
+          )}
+        </div>
         <p className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">pts</p>
       </div>
     </div>
