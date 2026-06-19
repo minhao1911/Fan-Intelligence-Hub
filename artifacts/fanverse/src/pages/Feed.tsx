@@ -18,6 +18,7 @@ import FanMomentCard from "@/components/FanMomentCard";
 import TopFanGroupsWidget from "@/components/TopFanGroupsWidget";
 import FanOfTheMatch from "@/components/FanOfTheMatch";
 import MatchDayCountdown from "@/components/MatchDayCountdown";
+import HotTakeStrip from "@/components/HotTakeStrip";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -128,6 +129,9 @@ export default function Feed() {
 
           {/* Match Day Countdown — only shows when a match is within 2 hours or live */}
           <MatchDayCountdown />
+
+          {/* Hot Take strip — most upvoted fan take, cycles every 5s */}
+          <HotTakeStrip />
 
           {/* Prediction prompt box */}
           <div className="bg-card border border-border rounded-xl p-5">
