@@ -17,6 +17,7 @@ import Discussions from "./pages/Discussions";
 import DiscussionDetail from "./pages/DiscussionDetail";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import Fixtures from "./pages/Fixtures";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -136,6 +137,7 @@ function AuthenticatedApp() {
           <Switch>
             <Route path="/feed" component={Feed} />
             <Route path="/pulse" component={Pulse} />
+            <Route path="/fixtures" component={Fixtures} />
             <Route path="/matches" component={Matches} />
             <Route path="/matches/:id" component={MatchDetail} />
             <Route path="/nations" component={Nations} />

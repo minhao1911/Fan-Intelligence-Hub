@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Activity, CalendarDays, Globe, Trophy, User, LogOut, Menu, Star } from "lucide-react";
+import { Home, Activity, CalendarDays, Globe, Trophy, User, LogOut, Menu, Star, ListOrdered } from "lucide-react";
 import { useClerk } from "@clerk/react";
 import { useGetMe } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: "Feed", href: "/feed", icon: Home },
     { name: "Pulse", href: "/pulse", icon: Activity },
+    { name: "Fixtures", href: "/fixtures", icon: ListOrdered },
     { name: "Matches", href: "/matches", icon: CalendarDays },
     { name: "Nations", href: "/nations", icon: Globe },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
