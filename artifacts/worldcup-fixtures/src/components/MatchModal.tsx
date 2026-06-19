@@ -126,10 +126,12 @@ export default function MatchModal({ matchId, onClose }: Props) {
   );
 }
 
-function TeamHero({ team }: { team: { name: string; shortName: string; crest: string | null; tla: string } }) {
+function TeamHero({ team }: { team: { name: string; shortName: string; crest: string | null; tla: string; flagEmoji?: string | null } }) {
   return (
     <div className="flex-1 flex flex-col items-center gap-2">
-      {team.crest ? (
+      {team.flagEmoji ? (
+        <span className="text-5xl leading-none select-none">{team.flagEmoji}</span>
+      ) : team.crest ? (
         <img src={team.crest} alt={team.name} className="w-14 h-14 object-contain" />
       ) : (
         <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold">

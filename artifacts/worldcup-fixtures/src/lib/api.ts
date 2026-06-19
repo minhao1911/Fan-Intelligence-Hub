@@ -28,6 +28,7 @@ export interface Team {
   shortName: string;
   crest: string | null;
   tla: string;
+  flagEmoji: string | null;
 }
 
 export interface Score {

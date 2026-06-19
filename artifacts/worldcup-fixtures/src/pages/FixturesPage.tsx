@@ -4,11 +4,9 @@ import { fetchFixtures, fetchStandings, type Match, type StandingGroup } from "@
 import MatchCard from "@/components/MatchCard";
 import MatchModal from "@/components/MatchModal";
 import StandingsTable from "@/components/StandingsTable";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { RefreshCw, Trophy, Search, Loader2, AlertCircle } from "lucide-react";
+import { Trophy, Search, Loader2, AlertCircle, Flame, Clock, CheckCircle2, BarChart3 } from "lucide-react";
 
 const STAGES: Record<string, string> = {
   "": "All Stages",
@@ -20,10 +18,21 @@ const STAGES: Record<string, string> = {
   "FINAL": "Final",
 };
 
+const TABS = [
+  { id: "all",       label: "All",       icon: null },
+  { id: "live",      label: "Live",      icon: Flame },
+  { id: "upcoming",  label: "Upcoming",  icon: Clock },
+  { id: "results",   label: "Results",   icon: CheckCircle2 },
+  { id: "standings", label: "Standings", icon: BarChart3 },
+] as const;
+
+type TabId = typeof TABS[number]["id"];
+
 export default function FixturesPage() {
   const [stage, setStage] = useState("");
   const [search, setSearch] = useState("");
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("all");
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["fixtures", stage],
@@ -38,7 +47,6 @@ export default function FixturesPage() {
   });
 
   const matches = data?.matches ?? [];
-
   const filtered = matches.filter((m) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
@@ -50,55 +58,76 @@ export default function FixturesPage() {
     );
   });
 
-  const live = filtered.filter((m) => m.status === "live");
-  const upcoming = filtered.filter((m) => m.status === "upcoming");
+  const live      = filtered.filter((m) => m.status === "live");
+  const upcoming  = filtered.filter((m) => m.status === "upcoming");
   const completed = filtered.filter((m) => m.status === "completed");
 
   const groupStandings: StandingGroup[] =
     (standings?.standings ?? []).filter((s) => s.type === "TOTAL");
 
+  const counts: Record<TabId, number> = {
+    all: filtered.length,
+    live: live.length,
+    upcoming: upcoming.length,
+    results: completed.length,
+    standings: groupStandings.length,
+  };
+
+  const tabMatches: Record<TabId, Match[]> = {
+    all: filtered,
+    live,
+    upcoming,
+    results: completed,
+    standings: [],
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0f1117] via-[#13182a] to-[#0f1117] text-white">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#1a1a2e]/95 backdrop-blur border-b border-white/10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-400" />
+      <header className="sticky top-0 z-40 bg-[#0f1117]/90 backdrop-blur-xl border-b border-white/[0.06]">
+        <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center">
+              <Trophy className="w-4 h-4 text-yellow-400" />
+            </div>
             <div>
-              <h1 className="font-bold text-lg leading-none">FIFA World Cup 2026</h1>
-              <p className="text-xs text-white/50">Live Fixtures & Standings</p>
+              <h1 className="font-black text-base leading-none tracking-tight">FIFA World Cup 2026</h1>
+              <p className="text-[10px] text-white/35 mt-0.5 uppercase tracking-widest font-medium">Fixtures & Standings</p>
             </div>
           </div>
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/8 transition-all text-xs text-white/50 hover:text-white/80 disabled:opacity-40"
             title="Refresh"
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            <svg className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {isFetching ? "Updating…" : "Refresh"}
           </button>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+      <main className="max-w-3xl mx-auto px-4 py-5 space-y-4">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-2.5">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25 pointer-events-none" />
             <Input
               placeholder="Search teams…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-yellow-400/50"
+              className="pl-9 h-9 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/20 focus:border-yellow-400/40 text-sm"
             />
           </div>
           <Select value={stage || "all"} onValueChange={(v) => setStage(v === "all" ? "" : v)}>
-            <SelectTrigger className="w-full sm:w-52 bg-white/5 border-white/10 text-white">
-              <SelectValue placeholder="Filter by stage" />
+            <SelectTrigger className="w-full sm:w-44 h-9 bg-white/[0.04] border-white/[0.08] text-white text-sm">
+              <SelectValue placeholder="All Stages" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1a1a2e] border-white/10 text-white">
+            <SelectContent className="bg-[#13182a] border-white/10 text-white">
               {Object.entries(STAGES).map(([val, label]) => (
-                <SelectItem key={val || "all"} value={val || "all"} className="focus:bg-white/10">
+                <SelectItem key={val || "all"} value={val || "all"} className="focus:bg-white/10 text-sm">
                   {label}
                 </SelectItem>
               ))}
@@ -108,66 +137,66 @@ export default function FixturesPage() {
 
         {/* Error */}
         {isError && (
-          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300">
-            <AlertCircle className="w-5 h-5 shrink-0" />
+          <div className="flex items-center gap-3 bg-red-500/8 border border-red-500/20 rounded-xl p-4 text-red-300/80">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <div>
-              <p className="font-medium">Failed to load fixtures</p>
-              <p className="text-sm text-red-400/80 mt-0.5">{(error as Error)?.message}</p>
+              <p className="font-semibold text-sm">Failed to load fixtures</p>
+              <p className="text-xs text-red-400/60 mt-0.5">{(error as Error)?.message}</p>
             </div>
           </div>
         )}
 
-        {/* Loading */}
+        {/* Loading skeleton */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/50">
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
-            <p className="text-sm">Loading World Cup fixtures…</p>
+          <div className="space-y-2 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-[4.5rem] rounded-xl bg-white/[0.04] border border-white/[0.04]" />
+            ))}
           </div>
         )}
 
         {!isLoading && !isError && (
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="bg-white/5 border border-white/10 rounded-xl p-1 h-auto flex-wrap gap-1">
-              <TabsTrigger value="all" className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black rounded-lg text-sm px-3 py-1.5">
-                All <span className="ml-1.5 text-xs opacity-70">{filtered.length}</span>
-              </TabsTrigger>
-              {live.length > 0 && (
-                <TabsTrigger value="live" className="data-[state=active]:bg-green-400 data-[state=active]:text-black rounded-lg text-sm px-3 py-1.5">
-                  <span className="inline-block w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse" />
-                  Live <span className="ml-1 text-xs opacity-70">{live.length}</span>
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="upcoming" className="data-[state=active]:bg-blue-400 data-[state=active]:text-black rounded-lg text-sm px-3 py-1.5">
-                Upcoming <span className="ml-1.5 text-xs opacity-70">{upcoming.length}</span>
-              </TabsTrigger>
-              <TabsTrigger value="results" className="data-[state=active]:bg-white/80 data-[state=active]:text-black rounded-lg text-sm px-3 py-1.5">
-                Results <span className="ml-1.5 text-xs opacity-70">{completed.length}</span>
-              </TabsTrigger>
-              {groupStandings.length > 0 && (
-                <TabsTrigger value="standings" className="data-[state=active]:bg-purple-400 data-[state=active]:text-black rounded-lg text-sm px-3 py-1.5">
-                  Standings
-                </TabsTrigger>
-              )}
-            </TabsList>
+          <div>
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 mb-4 overflow-x-auto scrollbar-none">
+              {TABS.map(({ id, label, icon: Icon }) => {
+                if (id === "live" && live.length === 0) return null;
+                if (id === "standings" && groupStandings.length === 0) return null;
+                const isActive = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? "bg-yellow-400 text-black shadow-[0_0_16px_rgba(250,204,21,0.25)]"
+                        : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    {id === "live" && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-black" : "bg-green-400"} animate-pulse shrink-0`} />
+                    )}
+                    {Icon && id !== "live" && <Icon className="w-3 h-3 shrink-0" />}
+                    {label}
+                    <span className={`font-mono text-[10px] ${isActive ? "opacity-60" : "opacity-40"}`}>
+                      {counts[id]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-            <TabsContent value="all" className="mt-4">
-              <MatchList matches={filtered} onSelect={setSelectedMatchId} />
-            </TabsContent>
-            <TabsContent value="live" className="mt-4">
-              <MatchList matches={live} onSelect={setSelectedMatchId} />
-            </TabsContent>
-            <TabsContent value="upcoming" className="mt-4">
-              <MatchList matches={upcoming} onSelect={setSelectedMatchId} />
-            </TabsContent>
-            <TabsContent value="results" className="mt-4">
-              <MatchList matches={completed} onSelect={setSelectedMatchId} />
-            </TabsContent>
-            <TabsContent value="standings" className="mt-4 space-y-4">
-              {groupStandings.map((group) => (
-                <StandingsTable key={group.group ?? group.stage} group={group} />
-              ))}
-            </TabsContent>
-          </Tabs>
+            {/* Tab content */}
+            {activeTab === "standings" ? (
+              <div className="space-y-3">
+                {groupStandings.map((group) => (
+                  <StandingsTable key={group.group ?? group.stage} group={group} />
+                ))}
+              </div>
+            ) : (
+              <MatchList matches={tabMatches[activeTab]} onSelect={setSelectedMatchId} />
+            )}
+          </div>
         )}
       </main>
 
@@ -181,31 +210,31 @@ export default function FixturesPage() {
 function MatchList({ matches, onSelect }: { matches: Match[]; onSelect: (id: number) => void }) {
   if (matches.length === 0) {
     return (
-      <div className="text-center py-16 text-white/40">
-        <Trophy className="w-10 h-10 mx-auto mb-3 opacity-30" />
-        <p>No matches found</p>
+      <div className="text-center py-20 text-white/20">
+        <Trophy className="w-8 h-8 mx-auto mb-3 opacity-20" />
+        <p className="text-sm">No matches found</p>
       </div>
     );
   }
 
   const byDate = matches.reduce<Record<string, Match[]>>((acc, m) => {
     const d = new Date(m.utcDate).toLocaleDateString("en-US", {
-      weekday: "long", month: "long", day: "numeric", timeZone: "UTC",
+      weekday: "short", month: "short", day: "numeric", timeZone: "UTC",
     });
     (acc[d] ||= []).push(m);
     return acc;
   }, {});
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {Object.entries(byDate).map(([date, dayMatches]) => (
         <div key={date}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-px flex-1 bg-white/10" />
-            <span className="text-xs text-white/40 font-medium uppercase tracking-wide px-2">{date}</span>
-            <div className="h-px flex-1 bg-white/10" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-px flex-1 bg-white/[0.06]" />
+            <span className="text-[10px] text-white/25 font-bold uppercase tracking-widest">{date}</span>
+            <div className="h-px flex-1 bg-white/[0.06]" />
           </div>
-          <div className="grid gap-2">
+          <div className="grid gap-1.5">
             {dayMatches.map((m) => (
               <MatchCard key={m.id} match={m} onClick={() => onSelect(m.id)} />
             ))}
