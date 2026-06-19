@@ -35,7 +35,7 @@ export default function MatchDayCountdown() {
   const liveMatch = live?.[0] ?? null;
 
   const soonMatch = useMemo(() => {
-    if (!upcoming) return null;
+    if (!Array.isArray(upcoming)) return null;
     return (
       upcoming
         .map((m) => ({ ...m, msUntil: new Date(m.scheduledAt).getTime() - now }))

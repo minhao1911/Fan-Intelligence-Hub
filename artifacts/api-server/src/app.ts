@@ -10,6 +10,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import fixturesRouter from "./routes/fixtures";
+import adminRouter from "./routes/admin";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -52,5 +53,6 @@ app.use(
 );
 
 app.use("/api", router);
+app.use("/api", adminRouter);
 
 export default app;
