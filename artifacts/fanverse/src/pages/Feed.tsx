@@ -17,6 +17,7 @@ import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
 import FanMomentCard from "@/components/FanMomentCard";
 import TopFanGroupsWidget from "@/components/TopFanGroupsWidget";
 import FanOfTheMatch from "@/components/FanOfTheMatch";
+import MatchDayCountdown from "@/components/MatchDayCountdown";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -124,6 +125,9 @@ export default function Feed() {
 
         {/* ══════════ CENTER FEED ══════════ */}
         <main className="flex flex-col gap-5 min-w-0">
+
+          {/* Match Day Countdown — only shows when a match is within 2 hours or live */}
+          <MatchDayCountdown />
 
           {/* Prediction prompt box */}
           <div className="bg-card border border-border rounded-xl p-5">
