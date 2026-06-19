@@ -182,12 +182,10 @@ export default function Feed() {
                       </div>
                     </div>
                     <div className="flex items-center justify-around mt-4 pt-3 border-t border-border/50">
-                      {[["👍 Cheer", `/matches/${match.id}`], ["💬 Banter", `/matches/${match.id}`], ["🚀 Predict", "/predictions"]].map(([label, href]) => (
-                        <Link key={label as string} href={href as string}>
-                          <button className="text-muted-foreground hover:text-primary transition-colors text-sm font-semibold">
-                            {label}
-                          </button>
-                        </Link>
+                      {["👍 Cheer", "💬 Banter", "🚀 Predict"].map((label) => (
+                        <span key={label} className="text-muted-foreground hover:text-primary transition-colors text-sm font-semibold cursor-pointer select-none">
+                          {label}
+                        </span>
                       ))}
                     </div>
                   </div>

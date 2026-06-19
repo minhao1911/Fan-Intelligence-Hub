@@ -509,4 +509,92 @@ router.get("/matches/:matchId/predictions/summary", async (req, res): Promise<vo
   });
 });
 
+// ── Resolve a match and settle all predictions ──────────────────────────────
+// POST /api/matches/:matchId/resolve  { homeScore: number, awayScore: number }
+// Protected by a simple RESOLVE_SECRET header so it can't be abused publicly.
+router.post("/matches/:matchId/resolve", async (req, res): Promise<void> => {
+  const secret = req.headers["x-resolve-secret"];
+  if (secret !== (process.env.RESOLVE_SECRET ?? "fanverse-resolve-2026")) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
+  const matchId = parseInt(raw, 10);
+
+  const { homeScore, awayScore } = req.body;
+  if (typeof homeScore !== "number" || typeof awayScore !== "number") {
+    res.status(400).json({ error: "homeScore and awayScore must be numbers" });
+    return;
+  }
+
+  const [match] = await db.select().from(matchesTable).where(eq(matchesTable.id, matchId));
+  if (!match) { res.status(404).json({ error: "Match not found" }); return; }
+  if (match.status === "completed") { res.status(409).json({ error: "Match already resolved" }); return; }
+
+  // Determine actual outcome
+  const actualOutcome: "home" | "draw" | "away" =
+    homeScore > awayScore ? "home" : homeScore < awayScore ? "away" : "draw";
+
+  // Update match record
+  await db
+    .update(matchesTable)
+    .set({ status: "completed", homeScore, awayScore })
+    .where(eq(matchesTable.id, matchId));
+
+  // Settle all predictions for this match
+  const preds = await db
+    .select()
+    .from(matchPredictionsTable)
+    .where(eq(matchPredictionsTable.matchId, matchId));
+
+  let settledCount = 0;
+  let correctCount = 0;
+  let exactCount = 0;
+
+  for (const pred of preds) {
+    const outcomeCorrect = pred.predictedOutcome === actualOutcome;
+    const scoreExact =
+      pred.predictedHomeScore === homeScore &&
+      pred.predictedAwayScore === awayScore;
+
+    // XP breakdown: +5 already awarded on submit, +10 bonus for correct outcome, +20 bonus for exact score
+    let bonusXp = 0;
+    if (scoreExact) {
+      bonusXp = 30; // total 35 XP
+    } else if (outcomeCorrect) {
+      bonusXp = 10; // total 15 XP
+    }
+
+    const isResolved = outcomeCorrect ? 1 : 2;
+    const totalXp = 5 + bonusXp;
+
+    await db
+      .update(matchPredictionsTable)
+      .set({ isResolved, xpEarned: totalXp })
+      .where(and(eq(matchPredictionsTable.matchId, matchId), eq(matchPredictionsTable.userId, pred.userId)));
+
+    if (bonusXp > 0) {
+      await db
+        .update(usersTable)
+        .set({ reputationPoints: sql`${usersTable.reputationPoints} + ${bonusXp}` })
+        .where(eq(usersTable.id, pred.userId));
+    }
+
+    settledCount++;
+    if (outcomeCorrect) correctCount++;
+    if (scoreExact) exactCount++;
+  }
+
+  res.json({
+    matchId,
+    homeScore,
+    awayScore,
+    actualOutcome,
+    settledCount,
+    correctCount,
+    exactCount,
+  });
+});
+
 export default router;
