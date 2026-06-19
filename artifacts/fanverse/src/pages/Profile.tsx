@@ -1,8 +1,12 @@
 import { useGetMe } from "@workspace/api-client-react";
+import { useAuth } from "@clerk/react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
-import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote } from "lucide-react";
+import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote, Target, CheckCircle2, XCircle, Clock, Flag } from "lucide-react";
+import { Link } from "wouter";
+import { getBaseUrl } from "@/lib/api";
 
 const TIERS = [
   { name: "Casual", minPoints: 0, maxPoints: 49 },
@@ -18,6 +22,47 @@ const EARN_RULES = [
   { action: "Leave a comment", points: 2, icon: <Activity className="h-4 w-4" /> },
   { action: "Join a nation", points: 10, icon: <Users className="h-4 w-4" /> },
 ];
+
+type Outcome = "home" | "draw" | "away";
+
+interface PredictionEntry {
+  matchId: number;
+  predictedOutcome: Outcome;
+  predictedHomeScore: number | null;
+  predictedAwayScore: number | null;
+  isResolved: number;
+  xpEarned: number;
+  createdAt: string;
+  match: {
+    homeNationCode: string;
+    homeNationName: string;
+    homeNationFlag: string;
+    awayNationCode: string;
+    awayNationName: string;
+    awayNationFlag: string;
+    stage: string | null;
+    status: string;
+    scheduledAt: string;
+    homeScore: number | null;
+    awayScore: number | null;
+  };
+}
+
+function useMyPredictions() {
+  const { getToken } = useAuth();
+  return useQuery<PredictionEntry[]>({
+    queryKey: ["me-predictions"],
+    queryFn: async () => {
+      const token = await getToken();
+      const r = await fetch(`${getBaseUrl()}api/me/predictions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Failed to fetch predictions");
+      return r.json();
+    },
+    staleTime: 30_000,
+  });
+}
 
 function TierProgressBar({ points }: { points: number }) {
   const currentTierIdx = TIERS.reduce((acc, t, i) => (points >= t.minPoints ? i : acc), 0);
@@ -123,6 +168,173 @@ function TierLadder({ currentPoints }: { currentPoints: number }) {
   );
 }
 
+const OUTCOME_LABELS: Record<Outcome, string> = { home: "Home Win", draw: "Draw", away: "Away Win" };
+const OUTCOME_COLORS: Record<Outcome, string> = {
+  home: "text-primary border-primary/40 bg-primary/8",
+  draw: "text-blue-400 border-blue-500/40 bg-blue-500/8",
+  away: "text-purple-400 border-purple-500/40 bg-purple-500/8",
+};
+
+function resolvedStatus(entry: PredictionEntry) {
+  const { match, predictedOutcome } = entry;
+  if (match.status !== "completed" || match.homeScore == null || match.awayScore == null) {
+    return "pending";
+  }
+  let actual: Outcome;
+  if (match.homeScore > match.awayScore) actual = "home";
+  else if (match.awayScore > match.homeScore) actual = "away";
+  else actual = "draw";
+
+  const outcomeCorrect = actual === predictedOutcome;
+  const scoreCorrect =
+    entry.predictedHomeScore === match.homeScore &&
+    entry.predictedAwayScore === match.awayScore;
+
+  if (scoreCorrect) return "exact";
+  if (outcomeCorrect) return "correct";
+  return "wrong";
+}
+
+function PredictionRow({ entry }: { entry: PredictionEntry }) {
+  const status = resolvedStatus(entry);
+  const { match } = entry;
+
+  const dateStr = new Date(match.scheduledAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  const statusBadge = {
+    pending: { label: "Pending", cls: "text-muted-foreground bg-muted border-border", icon: <Clock className="h-3 w-3" /> },
+    correct: { label: "Correct", cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30", icon: <CheckCircle2 className="h-3 w-3" /> },
+    exact: { label: "Exact Score!", cls: "text-orange-400 bg-orange-500/10 border-orange-500/30", icon: <Target className="h-3 w-3" /> },
+    wrong: { label: "Wrong", cls: "text-red-400 bg-red-500/10 border-red-500/30", icon: <XCircle className="h-3 w-3" /> },
+  }[status];
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-card hover:border-primary/20 transition-colors">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <span className="text-2xl leading-none shrink-0">{match.homeNationFlag}</span>
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-foreground uppercase tracking-wide truncate">
+            {match.homeNationCode} <span className="text-muted-foreground font-normal">vs</span> {match.awayNationCode}
+          </p>
+          <p className="text-[10px] text-muted-foreground">{match.stage ?? "Group Stage"} · {dateStr}</p>
+        </div>
+        <span className="text-2xl leading-none shrink-0">{match.awayNationFlag}</span>
+      </div>
+
+      <div className={`shrink-0 px-2 py-1 rounded-lg border text-[10px] font-heading font-bold uppercase tracking-wide ${OUTCOME_COLORS[entry.predictedOutcome]}`}>
+        {OUTCOME_LABELS[entry.predictedOutcome]}
+        {entry.predictedHomeScore != null && entry.predictedAwayScore != null && (
+          <span className="font-mono ml-1 opacity-70">({entry.predictedHomeScore}–{entry.predictedAwayScore})</span>
+        )}
+      </div>
+
+      {match.status === "completed" && (
+        <div className="text-xs font-mono text-muted-foreground shrink-0">
+          {match.homeScore}–{match.awayScore}
+        </div>
+      )}
+
+      <div className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg border text-[10px] font-bold ${statusBadge.cls}`}>
+        {statusBadge.icon}
+        {statusBadge.label}
+      </div>
+
+      {entry.xpEarned > 0 && (
+        <div className="flex items-center gap-0.5 text-primary text-[10px] font-bold shrink-0">
+          <Zap className="h-3 w-3" />+{entry.xpEarned}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PredictionsSection() {
+  const { data: predictions, isLoading } = useMyPredictions();
+
+  return (
+    <section>
+      <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+        <Target className="text-primary h-5 w-5" /> My Predictions
+      </h3>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-card rounded-xl animate-pulse" />)}
+        </div>
+      ) : !predictions || predictions.length === 0 ? (
+        <div className="text-center py-12 border border-dashed border-border/50 rounded-2xl">
+          <div className="text-4xl mb-2">🎯</div>
+          <p className="text-muted-foreground text-sm">No predictions yet.</p>
+          <Link href="/predictions" className="text-primary text-sm font-bold hover:underline mt-1 inline-block">
+            Make your first prediction →
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {predictions.map((entry) => (
+            <PredictionRow key={entry.matchId} entry={entry} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AllegianceSection({ nationCode, nationName }: { nationCode: string | null; nationName: string | null }) {
+  return (
+    <section>
+      <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+        <Flag className="text-primary h-5 w-5" /> Favorite Team
+      </h3>
+      <Card className="bg-card border-border">
+        <CardContent className="p-6">
+          {nationCode && nationName ? (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Flag className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Pledged Allegiance</p>
+                  <p className="text-xl font-heading font-bold text-foreground">{nationName}</p>
+                  <p className="text-xs font-mono text-muted-foreground">{nationCode}</p>
+                </div>
+              </div>
+              <Link
+                href="/nations"
+                className="text-xs text-primary font-bold uppercase tracking-wide hover:underline shrink-0"
+              >
+                Change →
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-muted border border-border flex items-center justify-center">
+                  <Flag className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5">No Allegiance Yet</p>
+                  <p className="text-sm text-muted-foreground">Pick your team and earn +10 reputation points.</p>
+                </div>
+              </div>
+              <Link
+                href="/nations"
+                className="text-xs text-primary font-bold uppercase tracking-wide hover:underline shrink-0"
+              >
+                Choose Nation →
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 export default function Profile() {
   const { data: user, isLoading } = useGetMe();
 
@@ -191,6 +403,12 @@ export default function Profile() {
         <StatCard title="Reactions" value={user.totalReactions.toLocaleString()} sub="+3 pts each" icon={<ThumbsUp className="text-primary h-5 w-5" />} />
         <StatCard title="Discussions" value={user.totalDiscussions.toLocaleString()} sub="+8 pts each" icon={<MessageSquare className="text-primary h-5 w-5" />} />
       </div>
+
+      {/* Favorite Team */}
+      <AllegianceSection nationCode={user.nationCode ?? null} nationName={user.nationName ?? null} />
+
+      {/* My Predictions */}
+      <PredictionsSection />
 
       {/* Tier Ladder */}
       <section>
