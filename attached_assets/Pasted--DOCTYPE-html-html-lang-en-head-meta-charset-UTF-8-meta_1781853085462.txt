@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanVerse - The Tournament Grandstand</title>
+    <style>
+        :root {
+            --bg-primary: #0b0c10;
+            --bg-secondary: #1f2833;
+            --bg-card: #151a22;
+            --accent-gold: #ffcc00;
+            --text-main: #ffffff;
+            --text-muted: #c5c6c7;
+            --accent-green: #00ff66;
+            --border-color: #2b3543;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- HEADER SECTION --- */
+        header {
+            background-color: var(--bg-secondary);
+            height: 65px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: 1.5px;
+            color: var(--accent-gold);
+        }
+
+        .search-bar {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--text-main);
+            width: 260px;
+            outline: none;
+        }
+
+        .header-center-tabs {
+            display: flex;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+            background: linear-gradient(to bottom, transparent, rgba(255, 204, 0, 0.05));
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .location-badge {
+            background: rgba(255, 204, 0, 0.15);
+            border: 1px solid var(--accent-gold);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .icon-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* --- MAIN LAYOUT CONTEXT --- */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 360px;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 25px;
+            padding: 25px 20px;
+        }
+
+        /* --- LEFT SIDEBAR (SHORTCUTS) --- */
+        .left-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-main);
+        }
+
+        /* --- CENTER COLUMN (MAIN FEED) --- */
+        .main-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Prediction Input Box */
+        .prediction-prompt-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .prompt-top {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            border: 2px solid var(--accent-gold);
+        }
+
+        .prompt-input {
+            flex-grow: 1;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0 20px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .prompt-actions {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            color: var(--accent-gold);
+        }
+
+        /* Challenges Carousel (Replaces Stories) */
+        .challenges-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        .challenges-carousel {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .challenges-carousel::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .challenges-carousel::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .challenge-card {
+            min-width: 150px;
+            height: 190px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .challenge-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-gold);
+        }
+
+        .challenge-card.pulse-challenge {
+            background: linear-gradient(135deg, rgba(21,26,34,1) 0%, rgba(43,53,67,1) 100%);
+        }
+
+        .challenge-badge {
+            background: var(--accent-gold);
+            color: #000;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 4px;
+            align-self: flex-start;
+            text-transform: uppercase;
+        }
+
+        .challenge-text {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        /* The Feed Post Card */
+        .feed-post {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .post-author-info {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .author-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .author-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .author-name {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .team-flag {
+            font-size: 14px;
+        }
+
+        .location-tag {
+            font-size: 11px;
+            color: var(--accent-gold);
+            background: rgba(255, 204, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 204, 0, 0.2);
+        }
+
+        .post-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .rank-pill {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .post-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            color: #f0f0f0;
+        }
+
+        .post-prediction-display {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-gold);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .predicted-score {
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+        }
+
+        .post-engagement-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .post-interactions {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+        }
+
+        /* --- RIGHT SIDEBAR (LEADERBOARDS & WIDGETS) --- */
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .widget-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        /* Split Rank Widget */
+        .rank-dashboard-widget {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .dashboard-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .split-card {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .split-card.highlighted {
+            border-color: var(--accent-gold);
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(255,204,0,0.03) 100%);
+        }
+
+        .split-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .split-value {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .split-card.highlighted .split-value {
+            color: var(--accent-gold);
+        }
+
+        /* Mini Leaderboard List */
+        .leaderboard-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .leaderboard-row.user-row {
+            background-color: rgba(255, 204, 0, 0.1);
+            border: 1px dashed var(--accent-gold);
+        }
+
+        .row-identity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .row-rank {
+            font-weight: 800;
+            width: 20px;
+            color: var(--text-muted);
+        }
+
+        .row-rank.top-three {
+            color: var(--accent-gold);
+        }
+
+        .row-points {
+            font-weight: 700;
+        }
+
+        /* City vs City Metrics */
+        .battle-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .battle-progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .battle-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .battle-bar-track {
+            height: 10px;
+            background-color: var(--bg-secondary);
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .battle-bar-fill {
+            height: 100%;
+            background-color: var(--accent-gold);
+        }
+
+        /* --- RESPONSIVE ADJUSTMENTS --- */
+        @media (max-width: 1100px) {
+            .app-container {
+                grid-template-columns: 1fr 340px;
+            }
+            .left-sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .right-sidebar {
+                display: none;
+            }
+            .header-center-tabs {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="logo">FANVERSE</div>
+            <input type="text" class="search-bar" placeholder="Search fans, regions, or teams...">
+        </div>
+        
+        <div class="header-center-tabs">
+            <a href="#" class="nav-tab active">Austin Fanzone</a>
+            <a href="#" class="nav-tab">Global Arena</a>
+        </div>
+
+        <div class="header-right">
+            <span class="location-badge">📍 Austin, TX</span>
+            <button class="icon-btn" title="Notifications">🔔</button>
+            <div class="avatar" title="My Profile"></div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        
+        <aside class="left-sidebar">
+            <a href="#" class="sidebar-link">⚽ Live Match Center</a>
+            <a href="#" class="sidebar-link">🇺🇸 My Team Dashboard</a>
+            <a href="#" class="sidebar-link">🏆 Tournament Bracket</a>
+            <a href="#" class="sidebar-link">🎖️ Earned Badges & Unlocks</a>
+            <a href="#" class="sidebar-link">⚙️ Regional Settings</a>
+        </aside>
+
+        <main class="main-feed">
+            
+            <div class="prediction-prompt-box">
+                <div class="prompt-top">
+                    <div class="avatar"></div>
+                    <div class="prompt-input">What's Austin's consensus for tonight's big match? Post a take...</div>
+                </div>
+                <div class="prompt-actions">
+                    <button class="action-btn">🎯 Quick Score Predictor</button>
+                    <button class="action-btn">📊 Launch Local Poll</button>
+                </div>
+            </div>
+
+            <div class="challenges-section">
+                <h2 class="section-title">Daily Challenges</h2>
+                <div class="challenges-carousel">
+                    
+                    <div class="challenge-card pulse-challenge">
+                        <span class="challenge-badge">Match Pulse</span>
+                        <p class="challenge-text">Will USA make the Semis? Vote now.</p>
+                    </div>
+
+                    <div class="challenge-card">
+                        <span class="challenge-badge" style="background-color: var(--accent-green);">Trivia +15 XP</span>
+                        <p class="challenge-text">Who scored the golden goal in 2010?</p>
+                    </div>
+
+                    <div class="challenge-card">
+                        <span class="challenge-badge">Streak Bonus</span>
+                        <p class="challenge-text">Lock 3 correct scores to maintain streak.</p>
+                    </div>
+
+                    <div class="challenge-card">
+                        <span class="challenge-badge">Local Pick</span>
+                        <p class="challenge-text">See what 82% of Austin fans picked today.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="feed-post">
+                <div class="post-header">
+                    <div class="post-author-info">
+                        <div class="avatar" style="border-color: var(--accent-green);"></div>
+                        <div class="author-meta">
+                            <div class="author-name-row">
+                                <span class="author-name">Alex_TX96</span>
+                                <span class="team-flag">🇺🇸</span>
+                                <span class="location-tag">Downtown Austin</span>
+                            </div>
+                            <span class="post-time">2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="rank-pill">Local Rank: #14</div>
+                </div>
+
+                <div class="post-content">
+                    If our midfield doesn't press higher up the pitch during transitions tonight, we are going to get completely exposed on the counter-attacks. Locking in my prediction early! What do the local sports bars think?
+                </div>
+
+                <div class="post-prediction-display">
+                    <div>
+                        <span style="font-size: 12px; text-transform: uppercase; color: var(--text-muted); display: block;">Match Prediction</span>
+                        <span style="font-weight: 700;">USA vs Germany</span>
+                    </div>
+                    <div class="predicted-score">2 - 1</div>
+                </div>
+
+                <div class="post-rendering-stats post-engagement-stats">
+                    <span>🔥 42 Local Cheers</span>
+                    <span>18 Banter Comments</span>
+                </div>
+
+                <div class="post-interactions">
+                    <button class="action-btn">👍 Cheer</button>
+                    <button class="action-btn">💬 Banter</button>
+                    <button class="action-btn">🚀 Boost Take</button>
+                </div>
+            </div>
+
+        </main>
+
+        <aside class="right-sidebar">
+            
+            <div class="widget-box rank-dashboard-widget">
+                <h2 class="section-title">Your Prediction Standings</h2>
+                <div class="dashboard-split">
+                    <div class="split-card highlighted">
+                        <div class="split-label">Austin Rank</div>
+                        <div class="split-value">#4</div>
+                    </div>
+                    <div class="split-card">
+                        <div class="split-label">Global Rank</div>
+                        <div class="split-value">#142,305</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-list">
+                    <h3 style="font-size: 12px; color: var(--text-muted);">Top Local Predictors:</h3>
+                    
+                    <div class="leaderboard-row">
+                        <div class="row-identity">
+                            <span class="row-rank top-three">1</span>
+                            <span>Mo_FC 🇲🇽</span>
+                        </div>
+                        <span class="row-points">2,450 pts</span>
+                    </div>
+
+                    <div class="leaderboard-row">
+                        <div class="row-identity">
+                            <span class="row-rank top-three">2</span>
+                            <span>TexasCapo 🇺🇸</span>
+                        </div>
+                        <span class="row-points">2,310 pts</span>
+                    </div>
+
+                    <div class="leaderboard-row user-row">
+                        <div class="row-identity">
+                            <span class="row-rank">4</span>
+                            <span>You (AustinFan) 🇺🇸</span>
+                        </div>
+                        <span class="row-points">1,980 pts</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="widget-box">
+                <h2 class="section-title">Texas Territory Turf Wars</h2>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Average city accuracy metrics based on matchday predictions.</p>
+                
+                <div class="battle-metrics">
+                    
+                    <div class="battle-progress-container">
+                        <div class="battle-labels">
+                            <span>1. Austin</span>
+                            <span>74.2%</span>
+                        </div>
+                        <div class="battle-bar-track">
+                            <div class="battle-bar-fill" style="width: 74.2%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="battle-progress-container">
+                        <div class="battle-labels">
+                            <span>2. Houston</span>
+                            <span>68.5%</span>
+                        </div>
+                        <div class="battle-bar-track">
+                            <div class="battle-bar-fill" style="width: 68.5%; background-color: var(--text-muted);"></div>
+                        </div>
+                    </div>
+
+                    <div class="battle-progress-container">
+                        <div class="battle-labels">
+                            <span>3. Dallas</span>
+                            <span>61.1%</span>
+                        </div>
+                        <div class="battle-bar-track">
+                            <div class="battle-bar-fill" style="width: 61.1%; background-color: var(--text-muted);"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </aside>
+
+    </div>
+
+</body>
+</html>

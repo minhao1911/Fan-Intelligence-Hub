@@ -1,319 +1,421 @@
-import { useListMatches, useGetGlobalStats, useListNations } from "@workspace/api-client-react";
+import {
+  useListMatches,
+  useGetGlobalStats,
+  useListNations,
+  useGetMe,
+  useGetLeaderboard,
+  useListDiscussions,
+} from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Activity, Clock, TrendingUp, Globe, Zap, Target, MessageSquare, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Activity, Clock, Globe, Trophy, Target, MessageSquare,
+  Users, Zap, Swords,
+} from "lucide-react";
+
+const NAV_LINKS = [
+  { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
+  { href: "/nations",     emoji: "🌍", label: "My Team Dashboard" },
+  { href: "/fixtures",    emoji: "🏆", label: "Tournament Bracket" },
+  { href: "/leaderboard", emoji: "🎖️", label: "Badges & Ranks" },
+  { href: "/predictions", emoji: "🎯", label: "Predictions Hub" },
+  { href: "/discussions", emoji: "💬", label: "Fan Banter" },
+  { href: "/groups",      emoji: "👥", label: "Fan Groups" },
+  { href: "/pulse",       emoji: "📊", label: "Analytics Pulse" },
+];
+
+const CHALLENGES = [
+  { href: "/pulse",       badge: "Match Pulse",  badgeClass: "bg-primary text-primary-foreground",   text: "Which nation dominates tonight? Cast your confidence vote." },
+  { href: "/predictions", badge: "Trivia +15 XP", badgeClass: "bg-emerald-500 text-black",            text: "Predict 3 correct scores today to earn a streak bonus." },
+  { href: "/matches",     badge: "Streak Bonus",  badgeClass: "bg-primary text-primary-foreground",   text: "Lock 3 correct scores in a row to maintain your streak." },
+  { href: "/nations",     badge: "Nation Pick",   badgeClass: "bg-blue-500 text-white",               text: "See what the global fanbase is predicting for tonight." },
+  { href: "/discussions", badge: "Hot Take",      badgeClass: "bg-red-500 text-white",                text: "Drop your boldest match take and climb the banter board." },
+];
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function Feed() {
-  const { data: matches, isLoading: matchesLoading } = useListMatches({ status: "upcoming", limit: 5 });
+  const { data: upcomingMatches, isLoading: matchesLoading } = useListMatches({ status: "upcoming", limit: 5 });
   const { data: liveMatches } = useListMatches({ status: "live", limit: 3 });
   const { data: stats } = useGetGlobalStats();
   const { data: nations } = useListNations({});
+  const { data: me } = useGetMe();
+  const { data: leaderboard } = useGetLeaderboard({ limit: 5 });
+  const { data: discussions } = useListDiscussions({ limit: 4 });
 
   const topNations = nations
-    ? [...nations].sort((a, b) => (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0)).slice(0, 6)
+    ? [...nations].sort((a, b) => (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0)).slice(0, 5)
     : [];
 
+  const myEntry = leaderboard?.find((e) => e.user.username === me?.username);
+
   return (
-    <div className="flex gap-6 animate-in fade-in duration-500">
+    <>
+      <style>{`
+        .feed-grid { display: grid; grid-template-columns: 280px 1fr 360px; gap: 1.5rem; }
+        @media (max-width: 1100px) {
+          .feed-grid { grid-template-columns: 1fr 340px; }
+          .feed-left  { display: none; }
+        }
+        @media (max-width: 768px) {
+          .feed-grid { grid-template-columns: 1fr; }
+          .feed-right { display: none; }
+        }
+      `}</style>
 
-      {/* ── LEFT PANEL ──────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col gap-4 w-72 xl:w-80 shrink-0">
+      <div className="feed-grid animate-in fade-in duration-500">
 
-        {/* Nation Pulse Card */}
-        <Card className="bg-card border-border overflow-hidden">
-          <div className="h-1 w-full bg-gradient-to-r from-primary via-primary/60 to-transparent" />
-          <CardContent className="p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-1.5">
-              <Activity className="h-3 w-3" /> Nation Pulse
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Votes Cast", value: stats?.totalVotesCast?.toLocaleString() ?? "—", icon: Zap },
-                { label: "Fan Analysts", value: stats?.totalFans?.toLocaleString() ?? "—", icon: Users },
-                { label: "Nations Active", value: stats?.totalNationsActive?.toLocaleString() ?? "—", icon: Globe },
-                { label: "Live Matches", value: (liveMatches?.length ?? 0).toString(), icon: Activity },
-              ].map(({ label, value, icon: Icon }) => (
-                <div key={label} className="bg-muted/40 rounded-xl p-3 border border-border/50">
-                  <Icon className="h-3.5 w-3.5 text-primary mb-1.5" />
-                  <p className="text-lg font-heading font-bold text-foreground leading-none">{value}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wide">{label}</p>
-                </div>
-              ))}
-            </div>
-            <Link href="/pulse" className="block mt-4">
-              <Button variant="outline" size="sm" className="w-full border-primary/40 text-primary hover:bg-primary/10 text-xs font-heading uppercase tracking-wide">
-                Full Analytics →
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="bg-card border-border">
-          <CardContent className="p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Quick Actions</p>
-            <div className="space-y-1.5">
-              {[
-                { href: "/discussions", icon: MessageSquare, label: "Start Discussion", color: "text-blue-400" },
-                { href: "/matches",     icon: Activity,      label: "Match Reactions", color: "text-red-400" },
-                { href: "/nations",     icon: Globe,         label: "Confidence Poll", color: "text-emerald-400" },
-                { href: "/predictions", icon: Target,        label: "Predict a Match", color: "text-primary" },
-              ].map(({ href, icon: Icon, label, color }) => (
-                <Link key={href} href={href}>
-                  <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/60 transition-colors group cursor-pointer`}>
-                    <Icon className={`h-4 w-4 ${color} shrink-0`} />
-                    <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming fixtures teaser on left for desktop-only */}
-        <Card className="bg-card border-border">
-          <CardContent className="p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
-              <Clock className="h-3 w-3" /> Quick Links
-            </p>
-            <div className="space-y-1">
-              {[
-                { href: "/leaderboard", label: "Fan Leaderboard" },
-                { href: "/groups",      label: "Fan Groups" },
-                { href: "/fixtures",    label: "All Fixtures" },
-                { href: "/profile",     label: "My Reputation" },
-              ].map(({ href, label }) => (
-                <Link key={href} href={href}>
-                  <div className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-1.5 flex items-center justify-between group">
-                    {label}
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-primary text-xs">→</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </aside>
-
-      {/* ── CENTER FEED ─────────────────────────────── */}
-      <div className="flex-1 min-w-0 space-y-5">
-
-        {/* Live Pulse Hero */}
-        <section className="bg-card border border-primary/20 rounded-2xl p-6 relative overflow-hidden shadow-xl shadow-primary/5">
-          <div className="absolute -right-16 -top-16 opacity-5 pointer-events-none">
-            <Activity className="w-64 h-64 text-primary" />
-          </div>
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-primary font-heading uppercase tracking-widest text-xs mb-1">Live Pulse</p>
-              <div className="flex items-end gap-3">
-                <span className="text-5xl font-heading font-bold text-foreground">
-                  {stats?.totalVotesCast?.toLocaleString() ?? "—"}
-                </span>
-                <span className="text-lg text-muted-foreground pb-1">votes cast</span>
-              </div>
-              <div className="flex items-center gap-6 mt-2 text-sm text-muted-foreground">
-                <span><strong className="text-foreground">{stats?.totalFans?.toLocaleString() ?? "—"}</strong> analysts</span>
-                <span><strong className="text-foreground">{stats?.totalNationsActive?.toLocaleString() ?? "—"}</strong> nations active</span>
-              </div>
-            </div>
-            <Link href="/pulse">
-              <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10 shrink-0">
-                Nation Pulse Analytics →
-              </Button>
-            </Link>
-          </div>
-        </section>
-
-        {/* Mobile-only quick actions row */}
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden no-scrollbar">
-          {[
-            { href: "/discussions", icon: MessageSquare, label: "Discuss" },
-            { href: "/matches",     icon: Activity,      label: "Reactions" },
-            { href: "/predictions", icon: Target,        label: "Predict" },
-            { href: "/nations",     icon: Globe,         label: "Nations" },
-            { href: "/leaderboard", icon: TrendingUp,    label: "Leaders" },
-          ].map(({ href, icon: Icon, label }) => (
+        {/* ══════════ LEFT SIDEBAR ══════════ */}
+        <aside className="feed-left flex flex-col gap-1">
+          {NAV_LINKS.map(({ href, emoji, label }) => (
             <Link key={href} href={href}>
-              <div className="flex flex-col items-center gap-1.5 px-4 py-3 bg-card border border-border rounded-xl shrink-0 hover:border-primary/40 transition-colors">
-                <Icon className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground whitespace-nowrap">{label}</span>
+              <div className="flex items-center gap-4 px-3 py-3 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer font-medium text-sm">
+                <span className="text-base leading-none w-5 text-center">{emoji}</span>
+                <span>{label}</span>
               </div>
             </Link>
           ))}
-        </div>
 
-        {/* Live Matches */}
-        {liveMatches && liveMatches.length > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-sm font-heading font-bold uppercase flex items-center gap-2 text-foreground">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-              Live Now
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {liveMatches.map((match) => (
-                <Link key={match.id} href={`/matches/${match.id}`}>
-                  <Card className="bg-card border-red-500/20 hover:border-red-500/50 transition-colors cursor-pointer">
-                    <CardContent className="p-4 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-2xl">{match.homeNationFlag}</span>
-                        <span className="font-heading font-bold text-sm truncate">{match.homeNationName}</span>
-                      </div>
-                      <div className="font-heading text-xl font-bold text-red-500 shrink-0">
-                        {match.homeScore} – {match.awayScore}
-                      </div>
-                      <div className="flex items-center gap-3 flex-1 min-w-0 justify-end">
-                        <span className="font-heading font-bold text-sm truncate text-right">{match.awayNationName}</span>
-                        <span className="text-2xl">{match.awayNationFlag}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+          <div className="mt-4 bg-card border border-border rounded-xl p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-3 flex items-center gap-1.5">
+              <Activity className="h-3 w-3" /> Platform Pulse
+            </p>
+            <div className="space-y-2.5 text-sm">
+              {[
+                { icon: Zap,   label: "Votes Cast",    value: stats?.totalVotesCast?.toLocaleString() ?? "—" },
+                { icon: Users, label: "Fan Analysts",  value: stats?.totalFans?.toLocaleString() ?? "—" },
+                { icon: Globe, label: "Nations Active", value: stats?.totalNationsActive?.toLocaleString() ?? "—" },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5 text-primary" />{label}
+                  </span>
+                  <span className="font-bold font-mono text-foreground">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* ══════════ CENTER FEED ══════════ */}
+        <main className="flex flex-col gap-5 min-w-0">
+
+          {/* Prediction prompt box */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <div className="flex gap-4 mb-4">
+              <Avatar className="h-10 w-10 border-2 border-primary shrink-0">
+                <AvatarImage src={me?.avatarUrl ?? undefined} />
+                <AvatarFallback className="bg-secondary text-foreground font-heading text-xs">
+                  {me?.username?.substring(0, 2).toUpperCase() ?? "FV"}
+                </AvatarFallback>
+              </Avatar>
+              <Link href="/predictions" className="flex-1">
+                <div className="w-full bg-secondary border border-border rounded-full px-5 py-2.5 text-muted-foreground text-sm cursor-pointer hover:border-primary/50 transition-colors">
+                  What's your prediction for tonight's big match?
+                </div>
+              </Link>
+            </div>
+            <div className="flex items-center justify-around border-t border-border pt-3 gap-2">
+              {[
+                { href: "/predictions", icon: Target,        label: "Quick Score Predictor" },
+                { href: "/pulse",       icon: Activity,      label: "Launch Nation Poll" },
+                { href: "/discussions", icon: MessageSquare, label: "Post a Take" },
+              ].map(({ href, icon: Icon, label }) => (
+                <Link key={href} href={href}>
+                  <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs font-semibold cursor-pointer">
+                    <Icon className="h-4 w-4" />{label}
+                  </button>
                 </Link>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* Upcoming Fixtures */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-heading font-bold uppercase flex items-center gap-2 text-foreground">
-              <Clock className="w-4 h-4 text-primary" /> Upcoming Fixtures
-            </h3>
-            <Link href="/matches" className="text-xs font-bold text-primary hover:underline uppercase tracking-wide">
-              View All →
-            </Link>
           </div>
 
-          {matchesLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />)}
+          {/* Daily challenges carousel */}
+          <div className="flex flex-col gap-3">
+            <h2 className="text-sm font-heading font-bold uppercase tracking-widest text-primary">Daily Challenges</h2>
+            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "thin" }}>
+              {CHALLENGES.map((c) => (
+                <Link key={c.badge} href={c.href}>
+                  <div className="min-w-[150px] h-[190px] bg-card border border-border rounded-xl p-4 flex flex-col justify-between cursor-pointer hover:-translate-y-1 hover:border-primary/60 transition-all duration-200 shrink-0 bg-gradient-to-br from-card to-secondary/60">
+                    <span className={`self-start text-[9px] font-extrabold uppercase tracking-wide px-2 py-1 rounded ${c.badgeClass}`}>
+                      {c.badge}
+                    </span>
+                    <p className="text-sm font-bold leading-snug text-foreground">{c.text}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
-          ) : !matches?.length ? (
-            <Card className="bg-card border-border">
-              <CardContent className="py-8 text-center text-muted-foreground text-sm">
-                No upcoming matches scheduled.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {matches.map((match) => (
+          </div>
+
+          {/* Live matches */}
+          {liveMatches && liveMatches.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-heading font-bold uppercase flex items-center gap-2 text-foreground">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" /> Live Now
+              </h3>
+              {liveMatches.map((match) => (
                 <Link key={match.id} href={`/matches/${match.id}`}>
-                  <Card className="bg-card border-border hover:border-primary/40 transition-all duration-200 cursor-pointer group">
-                    <CardContent className="p-0">
-                      <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-muted/20">
-                        <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                          {match.competition}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(match.scheduledAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                        </span>
+                  <div className="bg-card border border-red-500/20 hover:border-red-500/50 rounded-xl p-5 transition-colors cursor-pointer">
+                    <div className="mb-3">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">
+                        🔴 Live · {match.competition}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="text-3xl">{match.homeNationFlag}</span>
+                        <span className="font-heading font-bold text-foreground truncate">{match.homeNationName}</span>
                       </div>
-                      <div className="flex items-center justify-between px-5 py-4">
-                        <div className="flex items-center gap-3 flex-1">
-                          <span className="text-2xl">{match.homeNationFlag}</span>
-                          <span className="font-heading font-bold truncate">{match.homeNationName}</span>
-                        </div>
-                        <div className="px-3 py-1 bg-muted rounded font-mono text-xs font-bold text-muted-foreground shrink-0">
-                          VS
-                        </div>
-                        <div className="flex items-center justify-end gap-3 flex-1">
-                          <span className="font-heading font-bold truncate text-right">{match.awayNationName}</span>
-                          <span className="text-2xl">{match.awayNationFlag}</span>
-                        </div>
+                      <div className="font-heading text-2xl font-bold text-red-400 tabular-nums shrink-0">
+                        {match.homeScore ?? 0} – {match.awayScore ?? 0}
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="flex items-center justify-end gap-3 flex-1">
+                        <span className="font-heading font-bold text-foreground truncate text-right">{match.awayNationName}</span>
+                        <span className="text-3xl">{match.awayNationFlag}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-around mt-4 pt-3 border-t border-border/50">
+                      {[["👍 Cheer", `/matches/${match.id}`], ["💬 Banter", `/matches/${match.id}`], ["🚀 Predict", "/predictions"]].map(([label, href]) => (
+                        <Link key={label as string} href={href as string}>
+                          <button className="text-muted-foreground hover:text-primary transition-colors text-sm font-semibold">
+                            {label}
+                          </button>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
           )}
-        </section>
-      </div>
 
-      {/* ── RIGHT PANEL ─────────────────────────────── */}
-      <aside className="hidden xl:flex flex-col gap-4 w-72 shrink-0">
-
-        {/* Top Confidence */}
-        <Card className="bg-card border-border">
-          <CardContent className="p-5">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3 text-primary" /> Top Confidence
-            </h3>
-            <div className="space-y-3">
-              {topNations.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground text-sm">Loading...</div>
-              ) : (
-                topNations.map((nation, idx) => (
-                  <Link key={nation.code} href={`/nations/${nation.code}`}>
-                    <div className="flex items-center gap-3 py-1.5 hover:opacity-80 transition-opacity cursor-pointer">
-                      <span className="font-mono text-xs text-muted-foreground w-4 shrink-0 text-center">{idx + 1}</span>
-                      <span className="text-xl leading-none">{nation.flagEmoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{nation.name}</p>
-                        <div className="h-1 bg-muted rounded-full mt-1 overflow-hidden">
-                          <div
-                            className="h-full bg-primary/70 rounded-full transition-all duration-500"
-                            style={{ width: `${nation.confidenceScore ?? 0}%` }}
-                          />
+          {/* Recent discussions */}
+          {discussions && discussions.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-heading font-bold uppercase flex items-center gap-2 text-foreground">
+                <MessageSquare className="w-4 h-4 text-primary" /> Fan Banter
+              </h3>
+              {discussions.map((d) => (
+                <Link key={d.id} href={`/discussions/${d.id}`}>
+                  <div className="bg-card border border-border hover:border-primary/30 rounded-xl p-5 transition-colors cursor-pointer">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9 border border-border shrink-0">
+                          <AvatarImage src={d.avatarUrl ?? undefined} />
+                          <AvatarFallback className="bg-secondary text-foreground font-heading text-[10px]">
+                            {d.username?.substring(0, 2).toUpperCase() ?? "FV"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-foreground">{d.username}</span>
+                            {d.userNationCode && (
+                              <span className="text-[10px] text-primary border border-primary/30 bg-primary/5 px-1.5 py-0.5 rounded font-bold uppercase">
+                                {d.userNationCode}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">{timeAgo(d.createdAt)}</span>
                         </div>
                       </div>
-                      <span className="font-mono text-xs font-bold text-primary shrink-0">
-                        {nation.confidenceScore ?? 0}%
+                      <span className="text-[10px] font-bold bg-secondary border border-border px-2 py-1 rounded-md text-muted-foreground whitespace-nowrap shrink-0">
+                        {d.commentCount ?? 0} replies
                       </span>
                     </div>
-                  </Link>
-                ))
-              )}
-            </div>
-            <div className="pt-3 mt-1 border-t border-border/50">
-              <Link href="/nations">
-                <Button variant="ghost" className="w-full text-xs text-muted-foreground hover:text-primary gap-2 h-8">
-                  <Globe className="w-3.5 h-3.5" /> View All Nations
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Trending / Quick Links */}
-        <Card className="bg-card border-border">
-          <CardContent className="p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Explore</p>
-            <div className="space-y-1">
-              {[
-                { href: "/leaderboard", label: "Fan Leaderboard" },
-                { href: "/discussions", label: "Discussions" },
-                { href: "/groups",      label: "Fan Groups" },
-                { href: "/profile",     label: "My Reputation" },
-              ].map(({ href, label }) => (
-                <Link key={href} href={href}>
-                  <div className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-1.5 flex items-center justify-between group">
-                    {label}
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-primary text-xs">→</span>
+                    <h4 className="font-bold text-sm text-foreground mb-1">{d.title}</h4>
+                    {d.content && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{d.content}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                      <span>🔥 {d.upvotes ?? 0} cheers</span>
+                      <span>💬 {d.commentCount ?? 0} banter</span>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Upcoming fixture count teaser */}
-        {matches && matches.length > 0 && (
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-5 text-center">
-              <div className="text-4xl font-heading font-bold text-primary">{matches.length}</div>
+          {/* Upcoming fixtures */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-heading font-bold uppercase flex items-center gap-2 text-foreground">
+                <Clock className="w-4 h-4 text-primary" /> Upcoming Fixtures
+              </h3>
+              <Link href="/matches" className="text-xs font-bold text-primary hover:underline uppercase tracking-wide">
+                View All →
+              </Link>
+            </div>
+            {matchesLoading ? (
+              [1, 2, 3].map((i) => <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />)
+            ) : !upcomingMatches?.length ? (
+              <div className="bg-card border border-border rounded-xl py-8 text-center text-muted-foreground text-sm">
+                No upcoming matches scheduled.
+              </div>
+            ) : upcomingMatches.map((match) => (
+              <Link key={match.id} href={`/matches/${match.id}`}>
+                <div className="bg-card border border-border hover:border-primary/40 rounded-xl overflow-hidden transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-secondary/30">
+                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{match.competition}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(match.scheduledAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between px-5 py-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-2xl">{match.homeNationFlag}</span>
+                      <span className="font-heading font-bold truncate text-foreground">{match.homeNationName}</span>
+                    </div>
+                    <div className="px-3 py-1 bg-muted rounded font-mono text-xs font-bold text-muted-foreground shrink-0">VS</div>
+                    <div className="flex items-center justify-end gap-3 flex-1">
+                      <span className="font-heading font-bold truncate text-right text-foreground">{match.awayNationName}</span>
+                      <span className="text-2xl">{match.awayNationFlag}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </main>
+
+        {/* ══════════ RIGHT SIDEBAR ══════════ */}
+        <aside className="feed-right flex flex-col gap-5">
+
+          {/* Prediction standings widget */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h2 className="text-[10px] font-heading font-bold uppercase tracking-widest text-primary mb-4 flex items-center gap-1.5">
+              <Trophy className="h-3 w-3" /> Your Prediction Standings
+            </h2>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div
+                className="border border-primary rounded-lg p-4 text-center"
+                style={{ background: "linear-gradient(180deg, hsl(var(--secondary)) 0%, rgba(255,204,0,0.05) 100%)" }}
+              >
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wide">Local Rank</p>
+                <p className="text-xl font-heading font-bold text-primary">
+                  {myEntry ? `#${myEntry.rank}` : "—"}
+                </p>
+              </div>
+              <div className="bg-secondary border border-border rounded-lg p-4 text-center">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wide">Rep Points</p>
+                <p className="text-xl font-heading font-bold text-foreground">
+                  {me?.reputationPoints?.toLocaleString() ?? "—"}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide mb-2">Top Predictors:</p>
+            <div className="flex flex-col gap-1.5">
+              {leaderboard && leaderboard.length > 0 ? leaderboard.slice(0, 5).map((entry) => {
+                const isMe = entry.user.username === me?.username;
+                return (
+                  <div
+                    key={entry.user.username}
+                    className={`flex items-center justify-between px-2 py-2 rounded-lg text-sm ${
+                      isMe ? "bg-primary/10 border border-dashed border-primary/50" : "hover:bg-secondary/60 transition-colors"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`font-extrabold w-5 text-center text-xs ${entry.rank <= 3 ? "text-primary" : "text-muted-foreground"}`}>
+                        {entry.rank}
+                      </span>
+                      <Avatar className="h-6 w-6 border border-border">
+                        <AvatarFallback className="bg-muted text-muted-foreground text-[9px] font-heading">
+                          {entry.user.username.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={`font-semibold truncate max-w-[110px] text-xs ${isMe ? "text-primary" : "text-foreground"}`}>
+                        {isMe ? `You (${entry.user.username})` : entry.user.username}
+                      </span>
+                    </div>
+                    <span className="font-bold font-mono text-xs text-foreground shrink-0">
+                      {entry.user.reputationPoints.toLocaleString()} pts
+                    </span>
+                  </div>
+                );
+              }) : (
+                <div className="text-center py-4 text-muted-foreground text-sm">Loading...</div>
+              )}
+            </div>
+            <Link href="/leaderboard" className="block mt-3 pt-3 border-t border-border/50 text-center">
+              <span className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wide cursor-pointer">
+                Full Leaderboard →
+              </span>
+            </Link>
+          </div>
+
+          {/* Nation confidence battle */}
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h2 className="text-[10px] font-heading font-bold uppercase tracking-widest text-primary mb-1 flex items-center gap-1.5">
+              <Swords className="h-3 w-3" /> Nation Confidence Wars
+            </h2>
+            <p className="text-[11px] text-muted-foreground mb-4">Community confidence rankings by nation.</p>
+            <div className="flex flex-col gap-3">
+              {topNations.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground text-sm">Loading...</div>
+              ) : topNations.map((nation, idx) => {
+                const score = nation.confidenceScore ?? 0;
+                const isTop = idx === 0;
+                return (
+                  <Link key={nation.code} href={`/nations/${nation.code}`}>
+                    <div className="flex flex-col gap-1.5 cursor-pointer group">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-mono text-xs w-4 text-center ${isTop ? "text-primary" : "text-muted-foreground"}`}>
+                            {idx + 1}
+                          </span>
+                          <span className="text-lg leading-none">{nation.flagEmoji}</span>
+                          <span className="font-semibold text-foreground group-hover:text-primary transition-colors truncate max-w-[130px]">
+                            {nation.name}
+                          </span>
+                        </div>
+                        <span className={`font-bold font-mono text-xs ${isTop ? "text-primary" : "text-muted-foreground"}`}>
+                          {score}%
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${score}%`,
+                            backgroundColor: isTop ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link href="/nations" className="block mt-4 pt-3 border-t border-border/50 text-center">
+              <span className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wide cursor-pointer">
+                <Globe className="h-3.5 w-3.5 inline mr-1" /> View All Nations
+              </span>
+            </Link>
+          </div>
+
+          {/* Upcoming count teaser */}
+          {upcomingMatches && upcomingMatches.length > 0 && (
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-5 text-center">
+              <div className="text-4xl font-heading font-bold text-primary">{upcomingMatches.length}</div>
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Upcoming Fixtures</p>
               <Link href="/fixtures" className="block mt-3">
-                <Button size="sm" className="w-full bg-primary text-primary-foreground font-heading uppercase tracking-wide text-xs">
+                <button className="w-full bg-primary text-primary-foreground font-heading uppercase tracking-wide text-xs py-2 rounded-lg hover:bg-primary/90 transition-colors">
                   View Fixtures
-                </Button>
+                </button>
               </Link>
-            </CardContent>
-          </Card>
-        )}
-      </aside>
-    </div>
+            </div>
+          )}
+        </aside>
+
+      </div>
+    </>
   );
 }
