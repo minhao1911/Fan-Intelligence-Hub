@@ -5,7 +5,7 @@ import {
   Search, ChevronDown
 } from "lucide-react";
 import { useClerk } from "@clerk/react";
-import { useGetMe } from "@workspace/api-client-react";
+import { useGetMe, useListMatches } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
@@ -13,11 +13,17 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import LiveScoreTicker from "@/components/LiveScoreTicker";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { signOut } = useClerk();
   const { data: user } = useGetMe();
+  const { data: liveMatches } = useListMatches(
+    { status: "live", limit: 1 },
+    { query: { refetchInterval: 30_000 } },
+  );
+  const hasLive = (liveMatches?.length ?? 0) > 0;
 
   const navigation = [
     { name: "Feed",        href: "/feed",        icon: Home },
@@ -180,8 +186,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <LiveScoreTicker />
+
       {/* ── Page content ───────────────────────────────────────── */}
-      <main className="flex-1 pt-14 pb-16 lg:pb-4">
+      <main className={`flex-1 pb-16 lg:pb-4 transition-all duration-300 ${hasLive ? "pt-22" : "pt-14"}`}>
         <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 py-6">
           {children}
         </div>
