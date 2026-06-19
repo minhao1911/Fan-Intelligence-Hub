@@ -451,6 +451,25 @@ export interface GroupInput {
   isPublic?: boolean;
 }
 
+export type NationConfidenceBreakdownItem = {
+  level: number;
+  label: string;
+  emoji: string;
+  count: number;
+  pct: number;
+};
+
+export interface NationConfidence {
+  nationCode: string;
+  nationName: string;
+  flagEmoji: string;
+  overallConfidence: number;
+  totalVotes: number;
+  /** @nullable */
+  myVote?: number | null;
+  breakdown: NationConfidenceBreakdownItem[];
+}
+
 export type GroupPostAuthor = {
   id: number;
   username: string;
@@ -477,6 +496,14 @@ limit?: number;
 export type ListNationsParams = {
 search?: string;
 confederation?: string;
+};
+
+export type VoteNationConfidenceBody = {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  level: number;
 };
 
 export type ListGroupsParams = {

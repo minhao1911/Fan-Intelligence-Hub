@@ -28,6 +28,7 @@ import {
   Trash2,
   MessageSquare,
 } from "lucide-react";
+import { NationConfidenceMeter } from "@/components/NationConfidenceMeter";
 
 function timeAgo(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -175,6 +176,16 @@ export default function GroupDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Nation Confidence Meter — only for nation-affiliated groups */}
+      {group.nation && (
+        <NationConfidenceMeter
+          nationCode={group.nation.code}
+          nationName={group.nation.name}
+          flagEmoji={group.nation.flagEmoji}
+          isMember={isMember || isAdmin}
+        />
+      )}
 
       {/* Wall */}
       <div>

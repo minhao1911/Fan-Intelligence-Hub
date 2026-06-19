@@ -275,6 +275,62 @@ export const GetNationMembersResponse = zod.array(GetNationMembersResponseItem)
 
 
 /**
+ * @summary Get nation fan confidence rating and current user vote
+ */
+export const GetNationConfidenceParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const GetNationConfidenceResponse = zod.object({
+  "nationCode": zod.string(),
+  "nationName": zod.string(),
+  "flagEmoji": zod.string(),
+  "overallConfidence": zod.number(),
+  "totalVotes": zod.number(),
+  "myVote": zod.number().nullish(),
+  "breakdown": zod.array(zod.object({
+  "level": zod.number(),
+  "label": zod.string(),
+  "emoji": zod.string(),
+  "count": zod.number(),
+  "pct": zod.number()
+}))
+})
+
+
+/**
+ * @summary Cast or update a fan confidence vote for a nation
+ */
+export const VoteNationConfidenceParams = zod.object({
+  "code": zod.coerce.string()
+})
+
+export const voteNationConfidenceBodyLevelMax = 5;
+
+
+
+export const VoteNationConfidenceBody = zod.object({
+  "level": zod.number().min(1).max(voteNationConfidenceBodyLevelMax)
+})
+
+export const VoteNationConfidenceResponse = zod.object({
+  "nationCode": zod.string(),
+  "nationName": zod.string(),
+  "flagEmoji": zod.string(),
+  "overallConfidence": zod.number(),
+  "totalVotes": zod.number(),
+  "myVote": zod.number().nullish(),
+  "breakdown": zod.array(zod.object({
+  "level": zod.number(),
+  "label": zod.string(),
+  "emoji": zod.string(),
+  "count": zod.number(),
+  "pct": zod.number()
+}))
+})
+
+
+/**
  * @summary List all public fan groups
  */
 export const ListGroupsQueryParams = zod.object({

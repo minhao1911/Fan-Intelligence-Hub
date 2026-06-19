@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, sql } from "drizzle-orm";
-import { db, nationsTable, usersTable, matchesTable, pollVotesTable, pollOptionsTable, pollsTable } from "@workspace/db";
+import { db, nationsTable, usersTable, matchesTable, pollVotesTable, pollOptionsTable, pollsTable, nationConfidenceVotesTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 
@@ -258,6 +258,113 @@ router.get("/nations/:code/members", async (req, res): Promise<void> => {
     reputationTier: getReputationTier(u.reputationPoints),
     nationCode: u.nationCode,
   })));
+});
+
+const CONFIDENCE_LEVELS = [
+  { level: 1, label: "Doomed",    emoji: "💀", score: 10 },
+  { level: 2, label: "Shaky",     emoji: "😟", score: 30 },
+  { level: 3, label: "Neutral",   emoji: "😐", score: 50 },
+  { level: 4, label: "Strong",    emoji: "💪", score: 75 },
+  { level: 5, label: "Champions", emoji: "🔥", score: 95 },
+];
+
+async function buildConfidencePayload(code: string, userId?: number) {
+  const [nation] = await db.select().from(nationsTable).where(eq(nationsTable.code, code));
+  if (!nation) return null;
+
+  const votes = await db
+    .select()
+    .from(nationConfidenceVotesTable)
+    .where(eq(nationConfidenceVotesTable.nationCode, code));
+
+  const totalVotes = votes.length;
+  const breakdown = CONFIDENCE_LEVELS.map((lvl) => {
+    const count = votes.filter((v) => v.level === lvl.level).length;
+    return { ...lvl, count, pct: totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0 };
+  });
+
+  const overallConfidence =
+    totalVotes > 0
+      ? Math.round(votes.reduce((sum, v) => {
+          const lvl = CONFIDENCE_LEVELS.find((l) => l.level === v.level);
+          return sum + (lvl?.score ?? 50);
+        }, 0) / totalVotes)
+      : (nation.confidenceScore ?? 50);
+
+  const myVote = userId
+    ? (votes.find((v) => v.userId === userId)?.level ?? null)
+    : null;
+
+  return {
+    nationCode: nation.code,
+    nationName: nation.name,
+    flagEmoji: nation.flagEmoji,
+    overallConfidence,
+    totalVotes,
+    myVote,
+    breakdown,
+  };
+}
+
+router.get("/nations/:code/confidence", async (req, res): Promise<void> => {
+  const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
+  const payload = await buildConfidencePayload(code);
+  if (!payload) { res.status(404).json({ error: "Nation not found" }); return; }
+  res.json(payload);
+});
+
+router.post("/nations/:code/confidence", requireAuth, async (req, res): Promise<void> => {
+  const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+
+  const level = parseInt(req.body.level, 10);
+  if (isNaN(level) || level < 1 || level > 5) {
+    res.status(400).json({ error: "level must be 1–5" });
+    return;
+  }
+
+  const [nation] = await db.select().from(nationsTable).where(eq(nationsTable.code, code));
+  if (!nation) { res.status(404).json({ error: "Nation not found" }); return; }
+
+  // Upsert vote
+  await db
+    .insert(nationConfidenceVotesTable)
+    .values({ nationCode: code, userId: user.id, level })
+    .onConflictDoUpdate({
+      target: [nationConfidenceVotesTable.nationCode, nationConfidenceVotesTable.userId],
+      set: { level, updatedAt: new Date() },
+    });
+
+  // Recalculate and persist aggregate confidence score
+  const allVotes = await db
+    .select()
+    .from(nationConfidenceVotesTable)
+    .where(eq(nationConfidenceVotesTable.nationCode, code));
+
+  const newScore = allVotes.length > 0
+    ? allVotes.reduce((sum, v) => {
+        const lvl = CONFIDENCE_LEVELS.find((l) => l.level === v.level);
+        return sum + (lvl?.score ?? 50);
+      }, 0) / allVotes.length
+    : nation.confidenceScore ?? 50;
+
+  await db
+    .update(nationsTable)
+    .set({ confidenceScore: newScore })
+    .where(eq(nationsTable.code, code));
+
+  // Award reputation for first-time vote
+  const existingVotes = allVotes.filter(v => v.userId === user.id);
+  if (existingVotes.length === 1) {
+    await db
+      .update(usersTable)
+      .set({ reputationPoints: sql`${usersTable.reputationPoints} + 5` })
+      .where(eq(usersTable.id, user.id));
+  }
+
+  const payload = await buildConfidencePayload(code, user.id);
+  res.json(payload);
 });
 
 export default router;

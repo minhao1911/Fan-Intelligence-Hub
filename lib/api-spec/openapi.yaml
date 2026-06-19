@@ -241,6 +241,60 @@ paths:
                 items:
                   $ref: "#/components/schemas/UserSummary"
 
+  /nations/{code}/confidence:
+    get:
+      operationId: getNationConfidence
+      tags: [nations]
+      summary: Get nation fan confidence rating and current user vote
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Confidence data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationConfidence"
+        "404":
+          description: Nation not found
+    post:
+      operationId: voteNationConfidence
+      tags: [nations]
+      summary: Cast or update a fan confidence vote for a nation
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+              required: [level]
+      responses:
+        "200":
+          description: Updated confidence data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationConfidence"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Nation not found
+
   # ─── GROUPS ───────────────────────────────────────────────────────────────
   /groups:
     get:
@@ -1395,6 +1449,39 @@ components:
         isPublic:
           type: boolean
       required: [name, description]
+
+    NationConfidence:
+      type: object
+      properties:
+        nationCode:
+          type: string
+        nationName:
+          type: string
+        flagEmoji:
+          type: string
+        overallConfidence:
+          type: number
+        totalVotes:
+          type: integer
+        myVote:
+          type: ["integer", "null"]
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+              label:
+                type: string
+              emoji:
+                type: string
+              count:
+                type: integer
+              pct:
+                type: number
+            required: [level, label, emoji, count, pct]
+      required: [nationCode, nationName, flagEmoji, overallConfidence, totalVotes, breakdown]
 
     GroupPost:
       type: object

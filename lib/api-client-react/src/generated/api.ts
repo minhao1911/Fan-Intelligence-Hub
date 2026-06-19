@@ -44,6 +44,7 @@ import type {
   MatchDetail,
   MatchPulse,
   Nation,
+  NationConfidence,
   NationDetail,
   NationPulse,
   Poll,
@@ -53,7 +54,8 @@ import type {
   ReactionSummary,
   UserProfile,
   UserProfileUpdate,
-  UserSummary
+  UserSummary,
+  VoteNationConfidenceBody
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -908,6 +910,155 @@ export function useGetNationMembers<TData = Awaited<ReturnType<typeof getNationM
 
 
 
+
+export const getGetNationConfidenceUrl = (code: string,) => {
+
+
+
+
+  return `/api/nations/${code}/confidence`
+}
+
+/**
+ * @summary Get nation fan confidence rating and current user vote
+ */
+export const getNationConfidence = async (code: string, options?: RequestInit): Promise<NationConfidence> => {
+
+  return customFetch<NationConfidence>(getGetNationConfidenceUrl(code),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNationConfidenceQueryKey = (code: string,) => {
+    return [
+    `/api/nations/${code}/confidence`
+    ] as const;
+    }
+
+
+export const getGetNationConfidenceQueryOptions = <TData = Awaited<ReturnType<typeof getNationConfidence>>, TError = ErrorType<void>>(code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNationConfidence>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNationConfidenceQueryKey(code);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNationConfidence>>> = ({ signal }) => getNationConfidence(code, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(code), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNationConfidence>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetNationConfidenceQueryResult = NonNullable<Awaited<ReturnType<typeof getNationConfidence>>>
+export type GetNationConfidenceQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get nation fan confidence rating and current user vote
+ */
+
+export function useGetNationConfidence<TData = Awaited<ReturnType<typeof getNationConfidence>>, TError = ErrorType<void>>(
+ code: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNationConfidence>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetNationConfidenceQueryOptions(code,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getVoteNationConfidenceUrl = (code: string,) => {
+
+
+
+
+  return `/api/nations/${code}/confidence`
+}
+
+/**
+ * @summary Cast or update a fan confidence vote for a nation
+ */
+export const voteNationConfidence = async (code: string,
+    voteNationConfidenceBody: VoteNationConfidenceBody, options?: RequestInit): Promise<NationConfidence> => {
+
+  return customFetch<NationConfidence>(getVoteNationConfidenceUrl(code),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      voteNationConfidenceBody,)
+  }
+);}
+
+
+
+
+export const getVoteNationConfidenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voteNationConfidence>>, TError,{code: string;data: BodyType<VoteNationConfidenceBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof voteNationConfidence>>, TError,{code: string;data: BodyType<VoteNationConfidenceBody>}, TContext> => {
+
+const mutationKey = ['voteNationConfidence'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof voteNationConfidence>>, {code: string;data: BodyType<VoteNationConfidenceBody>}> = (props) => {
+          const {code,data} = props ?? {};
+
+          return  voteNationConfidence(code,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VoteNationConfidenceMutationResult = NonNullable<Awaited<ReturnType<typeof voteNationConfidence>>>
+    export type VoteNationConfidenceMutationBody = BodyType<VoteNationConfidenceBody>
+    export type VoteNationConfidenceMutationError = ErrorType<void>
+
+    /**
+ * @summary Cast or update a fan confidence vote for a nation
+ */
+export const useVoteNationConfidence = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voteNationConfidence>>, TError,{code: string;data: BodyType<VoteNationConfidenceBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof voteNationConfidence>>,
+        TError,
+        {code: string;data: BodyType<VoteNationConfidenceBody>},
+        TContext
+      > => {
+      return useMutation(getVoteNationConfidenceMutationOptions(options));
+    }
 
 export const getListGroupsUrl = (params?: ListGroupsParams,) => {
   const normalizedParams = new URLSearchParams();
