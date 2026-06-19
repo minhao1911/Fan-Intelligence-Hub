@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and, ne } from "drizzle-orm";
-import { db, usersTable, nationsTable, matchPredictionsTable, matchesTable } from "@workspace/db";
+import { db, usersTable, nationsTable, matchPredictionsTable, matchesTable, nationConfidenceVotesTable } from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
@@ -162,6 +162,45 @@ router.get("/me/predictions", requireAuth, async (req, res): Promise<void> => {
   );
 
   res.json(results.filter(Boolean));
+});
+
+router.get("/me/confidence-votes", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+
+  const XP_REWARDS: Record<number, number> = { 5: 50, 4: 25, 3: 5, 2: 0, 1: 0 };
+  const LEVEL_LABELS: Record<number, string> = {
+    1: "Doomed", 2: "Shaky", 3: "Neutral", 4: "Strong", 5: "Champions",
+  };
+  const LEVEL_EMOJI: Record<number, string> = {
+    1: "💀", 2: "😟", 3: "😐", 4: "💪", 5: "🔥",
+  };
+
+  const votes = await db
+    .select({
+      nationCode: nationConfidenceVotesTable.nationCode,
+      level: nationConfidenceVotesTable.level,
+      updatedAt: nationConfidenceVotesTable.updatedAt,
+      nationName: nationsTable.name,
+      flagEmoji: nationsTable.flagEmoji,
+      overallConfidence: nationsTable.confidenceScore,
+    })
+    .from(nationConfidenceVotesTable)
+    .innerJoin(nationsTable, eq(nationConfidenceVotesTable.nationCode, nationsTable.code))
+    .where(eq(nationConfidenceVotesTable.userId, user.id))
+    .orderBy(desc(nationConfidenceVotesTable.updatedAt));
+
+  res.json(votes.map((v) => ({
+    nationCode: v.nationCode,
+    nationName: v.nationName,
+    flagEmoji: v.flagEmoji,
+    level: v.level,
+    levelLabel: LEVEL_LABELS[v.level] ?? "Unknown",
+    levelEmoji: LEVEL_EMOJI[v.level] ?? "❓",
+    overallConfidence: v.overallConfidence ?? 50,
+    pendingXp: XP_REWARDS[v.level] ?? 0,
+    updatedAt: v.updatedAt?.toISOString() ?? null,
+  })));
 });
 
 export default router;

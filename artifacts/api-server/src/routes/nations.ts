@@ -367,4 +367,47 @@ router.post("/nations/:code/confidence", requireAuth, async (req, res): Promise<
   res.json(payload);
 });
 
+const ADVANCE_XP: Record<number, number> = { 5: 50, 4: 25, 3: 5, 2: 0, 1: 0 };
+
+router.post("/nations/:code/advance", async (req, res): Promise<void> => {
+  const secret = req.headers["x-resolve-secret"];
+  if (secret !== (process.env.RESOLVE_SECRET ?? "fanverse-resolve-2026")) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
+  const [nation] = await db.select().from(nationsTable).where(eq(nationsTable.code, code));
+  if (!nation) { res.status(404).json({ error: "Nation not found" }); return; }
+
+  const votes = await db
+    .select()
+    .from(nationConfidenceVotesTable)
+    .where(eq(nationConfidenceVotesTable.nationCode, code));
+
+  let totalXpAwarded = 0;
+  let rewardedCount = 0;
+
+  for (const vote of votes) {
+    const xp = ADVANCE_XP[vote.level] ?? 0;
+    if (xp > 0) {
+      await db
+        .update(usersTable)
+        .set({ reputationPoints: sql`${usersTable.reputationPoints} + ${xp}` })
+        .where(eq(usersTable.id, vote.userId));
+      totalXpAwarded += xp;
+      rewardedCount++;
+    }
+  }
+
+  res.json({
+    nationCode: code,
+    nationName: nation.name,
+    totalVoters: votes.length,
+    rewardedCount,
+    totalXpAwarded,
+    breakdown: ADVANCE_XP,
+  });
+});
+
 export default router;
