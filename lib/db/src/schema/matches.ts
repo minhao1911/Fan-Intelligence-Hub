@@ -52,3 +52,18 @@ export const reactionsTable = pgTable("reactions", {
   comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const matchPredictionsTable = pgTable("match_predictions", {
+  id: serial("id").primaryKey(),
+  matchId: integer("match_id").notNull(),
+  userId: integer("user_id").notNull(),
+  predictedOutcome: text("predicted_outcome").notNull(), // "home" | "draw" | "away"
+  predictedHomeScore: integer("predicted_home_score"),
+  predictedAwayScore: integer("predicted_away_score"),
+  isResolved: integer("is_resolved").notNull().default(0), // 0=pending, 1=correct, 2=wrong
+  xpEarned: integer("xp_earned").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export type MatchPrediction = typeof matchPredictionsTable.$inferSelect;

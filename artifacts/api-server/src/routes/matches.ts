@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql, desc } from "drizzle-orm";
-import { db, matchesTable, nationsTable, pollsTable, pollOptionsTable, pollVotesTable, reactionsTable, usersTable } from "@workspace/db";
+import { db, matchesTable, nationsTable, pollsTable, pollOptionsTable, pollVotesTable, reactionsTable, usersTable, matchPredictionsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 import { CastPollVoteBody, SubmitReactionBody } from "@workspace/api-zod";
@@ -394,6 +394,118 @@ router.get("/matches/:matchId/reactions/summary", async (req, res): Promise<void
     ...reactions,
     dominantReaction,
     averageSentiment,
+  });
+});
+
+// ── Predictions ─────────────────────────────────────────────────────────────
+
+router.post("/matches/:matchId/predict", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
+  const matchId = parseInt(raw, 10);
+
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+
+  const { predictedOutcome, predictedHomeScore, predictedAwayScore } = req.body;
+  if (!["home", "draw", "away"].includes(predictedOutcome)) {
+    res.status(400).json({ error: "predictedOutcome must be home, draw, or away" });
+    return;
+  }
+
+  const [match] = await db.select().from(matchesTable).where(eq(matchesTable.id, matchId));
+  if (!match) { res.status(404).json({ error: "Match not found" }); return; }
+  if (match.status !== "upcoming") { res.status(409).json({ error: "Match already started or completed" }); return; }
+
+  const [existing] = await db
+    .select()
+    .from(matchPredictionsTable)
+    .where(and(eq(matchPredictionsTable.matchId, matchId), eq(matchPredictionsTable.userId, user.id)));
+
+  let prediction;
+  if (existing) {
+    [prediction] = await db
+      .update(matchPredictionsTable)
+      .set({
+        predictedOutcome,
+        predictedHomeScore: predictedHomeScore ?? null,
+        predictedAwayScore: predictedAwayScore ?? null,
+      })
+      .where(and(eq(matchPredictionsTable.matchId, matchId), eq(matchPredictionsTable.userId, user.id)))
+      .returning();
+  } else {
+    [prediction] = await db
+      .insert(matchPredictionsTable)
+      .values({
+        matchId,
+        userId: user.id,
+        predictedOutcome,
+        predictedHomeScore: predictedHomeScore ?? null,
+        predictedAwayScore: predictedAwayScore ?? null,
+        xpEarned: 5,
+      })
+      .returning();
+    // Award +5 XP for first prediction on this match
+    await db
+      .update(usersTable)
+      .set({ reputationPoints: sql`${usersTable.reputationPoints} + 5` })
+      .where(eq(usersTable.id, user.id));
+  }
+
+  res.json({
+    matchId: prediction.matchId,
+    predictedOutcome: prediction.predictedOutcome,
+    predictedHomeScore: prediction.predictedHomeScore,
+    predictedAwayScore: prediction.predictedAwayScore,
+    xpEarned: prediction.xpEarned,
+  });
+});
+
+router.get("/matches/:matchId/my-prediction", requireAuth, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
+  const matchId = parseInt(raw, 10);
+
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+
+  const [prediction] = await db
+    .select()
+    .from(matchPredictionsTable)
+    .where(and(eq(matchPredictionsTable.matchId, matchId), eq(matchPredictionsTable.userId, user.id)));
+
+  if (!prediction) { res.status(404).json({ error: "No prediction" }); return; }
+
+  res.json({
+    matchId: prediction.matchId,
+    predictedOutcome: prediction.predictedOutcome,
+    predictedHomeScore: prediction.predictedHomeScore,
+    predictedAwayScore: prediction.predictedAwayScore,
+    xpEarned: prediction.xpEarned,
+  });
+});
+
+router.get("/matches/:matchId/predictions/summary", async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
+  const matchId = parseInt(raw, 10);
+
+  const preds = await db
+    .select()
+    .from(matchPredictionsTable)
+    .where(eq(matchPredictionsTable.matchId, matchId));
+
+  const total = preds.length;
+  const count = (o: string) => preds.filter((p) => p.predictedOutcome === o).length;
+  const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+
+  const homeCount = count("home");
+  const drawCount = count("draw");
+  const awayCount = count("away");
+
+  res.json({
+    matchId,
+    total,
+    homePct: pct(homeCount),
+    drawPct: pct(drawCount),
+    awayPct: pct(awayCount),
   });
 });
 

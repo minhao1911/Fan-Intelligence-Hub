@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Activity, CalendarDays, Globe, Trophy, User, LogOut, Menu, Star, ListOrdered, UsersRound } from "lucide-react";
+import { Home, Activity, CalendarDays, Globe, Trophy, User, LogOut, Menu, Star, ListOrdered, UsersRound, Target } from "lucide-react";
 import { useClerk } from "@clerk/react";
 import { useGetMe } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Matches", href: "/matches", icon: CalendarDays },
     { name: "Nations", href: "/nations", icon: Globe },
     { name: "Groups", href: "/groups", icon: UsersRound },
+    { name: "Predictions", href: "/predictions", icon: Target },
     { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
     { name: "Profile", href: "/profile", icon: User },
   ];
