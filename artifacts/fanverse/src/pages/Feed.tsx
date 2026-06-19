@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Activity, Clock, Globe, Trophy, Target, MessageSquare,
   Users, Zap, Swords, Camera, ChevronRight, ChevronLeft,
-  PanelRight,
+  PanelRight, MessageCircle,
 } from "lucide-react";
 import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
 import FanMomentCard from "@/components/FanMomentCard";
@@ -22,6 +22,7 @@ import MatchDayCountdown from "@/components/MatchDayCountdown";
 import HotTakeStrip from "@/components/HotTakeStrip";
 import NationRivalryCard from "@/components/NationRivalryCard";
 import BracketProgressWidget from "@/components/BracketProgressWidget";
+import FanLiveChat from "@/components/FanLiveChat";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -55,6 +56,7 @@ export default function Feed() {
   const [photoComposerOpen, setPhotoComposerOpen] = useState(false);
   const [fanPhotos, setFanPhotos] = useState<FanPhoto[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const { data: upcomingMatches, isLoading: matchesLoading } = useListMatches({ status: "upcoming", limit: 5 });
   const { data: liveMatches } = useListMatches({ status: "live", limit: 3 });
@@ -106,7 +108,38 @@ export default function Feed() {
         }
       `}</style>
 
-      {/* ── Floating sidebar toggle tab ── */}
+      {/* ── Fan Live Chat panel ── */}
+      <FanLiveChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        myUsername={me?.username ?? undefined}
+      />
+
+      {/* ── Floating chat toggle tab (left edge) ── */}
+      <button
+        onClick={() => setChatOpen((v) => !v)}
+        title={chatOpen ? "Close chat" : "Open Fan Live Chat"}
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-1.5 px-2 py-4 rounded-r-2xl border border-l-0 border-border/80 bg-card shadow-xl hover:bg-primary/10 hover:border-primary/50 transition-all duration-200 group"
+        style={{ marginTop: chatOpen ? 0 : 64 }}
+      >
+        {chatOpen ? (
+          <ChevronLeft className="h-4 w-4 text-primary" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-primary" />
+        )}
+        <span
+          className="text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors"
+          style={{ writingMode: "vertical-rl", textOrientation: "mixed", letterSpacing: "0.18em", transform: "rotate(180deg)" }}
+        >
+          {chatOpen ? "Close" : "Live Chat"}
+        </span>
+        <MessageCircle className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+        {!chatOpen && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse border border-card" />
+        )}
+      </button>
+
+      {/* ── Floating sidebar toggle tab (right edge) ── */}
       <button
         onClick={() => setSidebarOpen((v) => !v)}
         title={sidebarOpen ? "Minimise panel" : "Open Fan Hub"}
