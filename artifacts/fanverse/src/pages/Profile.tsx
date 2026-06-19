@@ -341,6 +341,83 @@ function AllegianceSection({ nationCode, nationName }: { nationCode: string | nu
   );
 }
 
+type UsernameStatus = "idle" | "same" | "checking" | "available" | "taken" | "invalid";
+
+function useUsernameAvailability(username: string, currentUsername: string | undefined) {
+  const { getToken } = useAuth();
+  const [status, setStatus] = useState<UsernameStatus>("idle");
+  const [reason, setReason] = useState<string | null>(null);
+
+  const trimmed = username.trim();
+
+  // Debounced check
+  useEffect(() => {
+    if (!trimmed) { setStatus("idle"); setReason(null); return; }
+    if (trimmed === currentUsername) { setStatus("same"); setReason(null); return; }
+    if (trimmed.length < 2 || trimmed.length > 40) {
+      setStatus("invalid");
+      setReason("Must be 2–40 characters.");
+      return;
+    }
+
+    setStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${getBaseUrl()}api/me/check-username?username=${encodeURIComponent(trimmed)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        setStatus(json.available ? "available" : "taken");
+        setReason(json.reason ?? null);
+      } catch {
+        setStatus("idle");
+      }
+    }, 420);
+
+    return () => clearTimeout(timer);
+  }, [trimmed, currentUsername]);
+
+  return { status, reason };
+}
+
+function UsernameStatusIndicator({ status, reason }: { status: UsernameStatus; reason: string | null }) {
+  if (status === "idle" || status === "same") return null;
+
+  const configs: Record<Exclude<UsernameStatus, "idle" | "same">, { icon: React.ReactNode; text: string; cls: string }> = {
+    checking: {
+      icon: <Loader2 className="h-3 w-3 animate-spin" />,
+      text: "Checking…",
+      cls: "text-muted-foreground",
+    },
+    available: {
+      icon: <CheckCircle2 className="h-3 w-3" />,
+      text: "Available",
+      cls: "text-emerald-400",
+    },
+    taken: {
+      icon: <XCircle className="h-3 w-3" />,
+      text: reason ?? "Already taken",
+      cls: "text-red-400",
+    },
+    invalid: {
+      icon: <XCircle className="h-3 w-3" />,
+      text: reason ?? "Invalid username",
+      cls: "text-amber-400",
+    },
+  };
+
+  const cfg = configs[status as Exclude<UsernameStatus, "idle" | "same">];
+  if (!cfg) return null;
+
+  return (
+    <div className={`flex items-center gap-1.5 text-[11px] font-medium ${cfg.cls}`}>
+      {cfg.icon}
+      {cfg.text}
+    </div>
+  );
+}
+
 function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: user } = useGetMe();
   const queryClient = useQueryClient();
@@ -358,6 +435,8 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
+  const { status: usernameStatus, reason: usernameReason } = useUsernameAvailability(username, user?.username);
+
   // Sync fields when dialog opens with current values
   const handleOpenChange = (o: boolean) => {
     if (o && user) {
@@ -367,12 +446,24 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
     if (!o) onClose();
   };
 
+  const canSave = usernameStatus !== "taken" && usernameStatus !== "invalid" && !isPending;
+
   const handleSave = () => {
+    if (!canSave) return;
     const body: { username?: string; avatarUrl?: string } = {};
     if (username.trim() && username.trim() !== user?.username) body.username = username.trim();
     if (avatarUrl.trim() !== (user?.avatarUrl ?? "")) body.avatarUrl = avatarUrl.trim() || undefined;
     mutate({ data: body });
   };
+
+  const inputBorderClass = {
+    idle: "border-border",
+    same: "border-border",
+    checking: "border-border",
+    available: "border-emerald-500/50 focus:border-emerald-500",
+    taken: "border-red-500/50 focus:border-red-500",
+    invalid: "border-amber-500/50 focus:border-amber-500",
+  }[usernameStatus];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -398,15 +489,18 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
 
           {/* Username */}
           <div className="space-y-1.5">
-            <Label htmlFor="ep-username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Username
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="ep-username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Username
+              </Label>
+              <UsernameStatusIndicator status={usernameStatus} reason={usernameReason} />
+            </div>
             <Input
               id="ep-username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder={user?.username ?? ""}
-              className="bg-background border-border text-foreground text-sm h-9"
+              className={`bg-background text-foreground text-sm h-9 transition-colors ${inputBorderClass}`}
               maxLength={40}
             />
           </div>
@@ -432,7 +526,7 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
             className="border-border text-muted-foreground hover:text-foreground">
             Cancel
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={isPending}
+          <Button size="sm" onClick={handleSave} disabled={!canSave}
             className="font-heading uppercase tracking-wide text-xs">
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
             {isPending ? "Saving…" : "Save Changes"}

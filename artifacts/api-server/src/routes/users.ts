@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, ne } from "drizzle-orm";
 import { db, usersTable, nationsTable, matchPredictionsTable, matchesTable } from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -33,6 +33,25 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     totalDiscussions: user.totalDiscussions,
     createdAt: user.createdAt.toISOString(),
   });
+});
+
+router.get("/me/check-username", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const username = typeof req.query.username === "string" ? req.query.username.trim() : "";
+
+  if (!username || username.length < 2 || username.length > 40) {
+    res.json({ available: false, reason: "Username must be 2–40 characters." });
+    return;
+  }
+
+  const currentUser = await getOrCreateUser(clerkId);
+
+  const [existing] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(eq(usersTable.username, username), ne(usersTable.id, currentUser.id)));
+
+  res.json({ available: !existing, reason: existing ? "Username is already taken." : null });
 });
 
 router.put("/me", requireAuth, async (req, res): Promise<void> => {
