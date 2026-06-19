@@ -20,6 +20,7 @@ import FanOfTheMatch from "@/components/FanOfTheMatch";
 import MatchDayCountdown from "@/components/MatchDayCountdown";
 import HotTakeStrip from "@/components/HotTakeStrip";
 import NationRivalryCard from "@/components/NationRivalryCard";
+import BracketProgressWidget from "@/components/BracketProgressWidget";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -347,6 +348,9 @@ export default function Feed() {
 
         {/* ══════════ RIGHT SIDEBAR ══════════ */}
         <aside className="feed-right flex flex-col gap-5">
+
+          {/* WC 2026 Bracket Progress */}
+          <BracketProgressWidget />
 
           {/* Prediction standings widget */}
           <div className="bg-card border border-border rounded-xl p-5">
