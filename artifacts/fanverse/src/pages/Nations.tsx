@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Users } from "lucide-react";
 import { useState } from "react";
 
-const CONFEDERATIONS = ["All", "UEFA", "CONMEBOL", "CONCACAF", "CAF", "AFC"];
+const CONFEDERATIONS = ["All", "UEFA", "CONMEBOL", "CONCACAF", "CAF", "AFC", "OFC"];
 
 export default function Nations() {
   const [search, setSearch] = useState("");

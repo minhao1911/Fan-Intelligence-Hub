@@ -18,7 +18,7 @@ router.get("/nations", async (req, res): Promise<void> => {
     .select()
     .from(nationsTable)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(nationsTable.memberCount);
+    .orderBy(sql`${nationsTable.memberCount} DESC`, nationsTable.name);
 
   res.json(nations.map(n => ({
     code: n.code,
