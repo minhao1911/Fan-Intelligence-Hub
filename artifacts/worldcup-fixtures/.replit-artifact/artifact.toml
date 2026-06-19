@@ -1,5 +1,5 @@
 kind = "web"
-previewPath = "/"
+previewPath = "/worldcup/"
 title = "World Cup 2026 Fixtures"
 version = "1.0.0"
 id = "artifacts/worldcup-fixtures"
@@ -11,8 +11,8 @@ version = "1.0.0"
 
 [[services]]
 name = "web"
-paths = [ "/" ]
-localPort = 18861
+paths = [ "/worldcup/" ]
+localPort = 18862
 
 [services.development]
 run = "pnpm --filter @workspace/worldcup-fixtures run dev"
@@ -27,5 +27,5 @@ from = "/*"
 to = "/index.html"
 
 [services.env]
-PORT = "18861"
-BASE_PATH = "/"
+PORT = "18862"
+BASE_PATH = "/worldcup/"
