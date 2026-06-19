@@ -22,6 +22,8 @@ import type {
 import type {
   Comment,
   CommentInput,
+  CreateGroupPostBody,
+  DeleteGroupPost200,
   Discussion,
   DiscussionDetail,
   DiscussionInput,
@@ -30,9 +32,11 @@ import type {
   Group,
   GroupDetail,
   GroupInput,
+  GroupPost,
   HealthStatus,
   LeaderboardEntry,
   ListDiscussionsParams,
+  ListGroupPostsParams,
   ListGroupsParams,
   ListMatchesParams,
   ListNationsParams,
@@ -1275,6 +1279,239 @@ export const useLeaveGroup = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getLeaveGroupMutationOptions(options));
+    }
+
+export const getListGroupPostsUrl = (id: number,
+    params?: ListGroupPostsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/groups/${id}/posts?${stringifiedParams}` : `/api/groups/${id}/posts`
+}
+
+/**
+ * @summary List posts on a group wall
+ */
+export const listGroupPosts = async (id: number,
+    params?: ListGroupPostsParams, options?: RequestInit): Promise<GroupPost[]> => {
+
+  return customFetch<GroupPost[]>(getListGroupPostsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListGroupPostsQueryKey = (id: number,
+    params?: ListGroupPostsParams,) => {
+    return [
+    `/api/groups/${id}/posts`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListGroupPostsQueryOptions = <TData = Awaited<ReturnType<typeof listGroupPosts>>, TError = ErrorType<void>>(id: number,
+    params?: ListGroupPostsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupPosts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGroupPostsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGroupPosts>>> = ({ signal }) => listGroupPosts(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGroupPosts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListGroupPostsQueryResult = NonNullable<Awaited<ReturnType<typeof listGroupPosts>>>
+export type ListGroupPostsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List posts on a group wall
+ */
+
+export function useListGroupPosts<TData = Awaited<ReturnType<typeof listGroupPosts>>, TError = ErrorType<void>>(
+ id: number,
+    params?: ListGroupPostsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listGroupPosts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListGroupPostsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateGroupPostUrl = (id: number,) => {
+
+
+
+
+  return `/api/groups/${id}/posts`
+}
+
+/**
+ * @summary Post a message on the group wall
+ */
+export const createGroupPost = async (id: number,
+    createGroupPostBody: CreateGroupPostBody, options?: RequestInit): Promise<GroupPost> => {
+
+  return customFetch<GroupPost>(getCreateGroupPostUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createGroupPostBody,)
+  }
+);}
+
+
+
+
+export const getCreateGroupPostMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGroupPost>>, TError,{id: number;data: BodyType<CreateGroupPostBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGroupPost>>, TError,{id: number;data: BodyType<CreateGroupPostBody>}, TContext> => {
+
+const mutationKey = ['createGroupPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGroupPost>>, {id: number;data: BodyType<CreateGroupPostBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createGroupPost(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGroupPostMutationResult = NonNullable<Awaited<ReturnType<typeof createGroupPost>>>
+    export type CreateGroupPostMutationBody = BodyType<CreateGroupPostBody>
+    export type CreateGroupPostMutationError = ErrorType<void>
+
+    /**
+ * @summary Post a message on the group wall
+ */
+export const useCreateGroupPost = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGroupPost>>, TError,{id: number;data: BodyType<CreateGroupPostBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGroupPost>>,
+        TError,
+        {id: number;data: BodyType<CreateGroupPostBody>},
+        TContext
+      > => {
+      return useMutation(getCreateGroupPostMutationOptions(options));
+    }
+
+export const getDeleteGroupPostUrl = (id: number,
+    postId: number,) => {
+
+
+
+
+  return `/api/groups/${id}/posts/${postId}`
+}
+
+/**
+ * @summary Delete a group wall post
+ */
+export const deleteGroupPost = async (id: number,
+    postId: number, options?: RequestInit): Promise<DeleteGroupPost200> => {
+
+  return customFetch<DeleteGroupPost200>(getDeleteGroupPostUrl(id,postId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteGroupPostMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteGroupPost>>, TError,{id: number;postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteGroupPost>>, TError,{id: number;postId: number}, TContext> => {
+
+const mutationKey = ['deleteGroupPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteGroupPost>>, {id: number;postId: number}> = (props) => {
+          const {id,postId} = props ?? {};
+
+          return  deleteGroupPost(id,postId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteGroupPostMutationResult = NonNullable<Awaited<ReturnType<typeof deleteGroupPost>>>
+
+    export type DeleteGroupPostMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a group wall post
+ */
+export const useDeleteGroupPost = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteGroupPost>>, TError,{id: number;postId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteGroupPost>>,
+        TError,
+        {id: number;postId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteGroupPostMutationOptions(options));
     }
 
 export const getListMatchesUrl = (params?: ListMatchesParams,) => {

@@ -8,6 +8,8 @@
 
 export * from './comment';
 export * from './commentInput';
+export * from './createGroupPostBody';
+export * from './deleteGroupPost200';
 export * from './discussion';
 export * from './discussionCategory';
 export * from './discussionDetail';
@@ -20,9 +22,12 @@ export * from './groupDetail';
 export * from './groupDetailNation';
 export * from './groupInput';
 export * from './groupMember';
+export * from './groupPost';
+export * from './groupPostAuthor';
 export * from './healthStatus';
 export * from './leaderboardEntry';
 export * from './listDiscussionsParams';
+export * from './listGroupPostsParams';
 export * from './listGroupsParams';
 export * from './listMatchesParams';
 export * from './listMatchesStatus';

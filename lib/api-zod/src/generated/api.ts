@@ -392,6 +392,59 @@ export const LeaveGroupResponse = zod.object({
 
 
 /**
+ * @summary List posts on a group wall
+ */
+export const ListGroupPostsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListGroupPostsQueryParams = zod.object({
+  "cursor": zod.coerce.number().optional()
+})
+
+export const ListGroupPostsResponseItem = zod.object({
+  "id": zod.number(),
+  "groupId": zod.number(),
+  "userId": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string(),
+  "author": zod.object({
+  "id": zod.number(),
+  "username": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "reputationTier": zod.string(),
+  "role": zod.string()
+})
+})
+export const ListGroupPostsResponse = zod.array(ListGroupPostsResponseItem)
+
+
+/**
+ * @summary Post a message on the group wall
+ */
+export const CreateGroupPostParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateGroupPostBody = zod.object({
+  "content": zod.string()
+})
+
+
+/**
+ * @summary Delete a group wall post
+ */
+export const DeleteGroupPostParams = zod.object({
+  "id": zod.coerce.number(),
+  "postId": zod.coerce.number()
+})
+
+export const DeleteGroupPostResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List upcoming and recent matches
  */
 export const listMatchesQueryLimitDefault = 20;

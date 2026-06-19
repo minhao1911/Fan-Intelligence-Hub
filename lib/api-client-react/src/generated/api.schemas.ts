@@ -451,6 +451,24 @@ export interface GroupInput {
   isPublic?: boolean;
 }
 
+export type GroupPostAuthor = {
+  id: number;
+  username: string;
+  /** @nullable */
+  avatarUrl?: string | null;
+  reputationTier: string;
+  role: string;
+};
+
+export interface GroupPost {
+  id: number;
+  groupId: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+  author: GroupPostAuthor;
+}
+
 export type GetLeaderboardParams = {
 nationCode?: string;
 limit?: number;
@@ -464,6 +482,18 @@ confederation?: string;
 export type ListGroupsParams = {
 search?: string;
 nationCode?: string;
+};
+
+export type ListGroupPostsParams = {
+cursor?: number;
+};
+
+export type CreateGroupPostBody = {
+  content: string;
+};
+
+export type DeleteGroupPost200 = {
+  ok: boolean;
 };
 
 export type ListMatchesParams = {
