@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   useListMatches,
   useGetGlobalStats,
@@ -11,7 +11,8 @@ import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Activity, Clock, Globe, Trophy, Target, MessageSquare,
-  Users, Zap, Swords, Camera,
+  Users, Zap, Swords, Camera, ChevronRight, ChevronLeft,
+  PanelRight,
 } from "lucide-react";
 import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
 import FanMomentCard from "@/components/FanMomentCard";
@@ -53,6 +54,7 @@ function timeAgo(dateStr: string): string {
 export default function Feed() {
   const [photoComposerOpen, setPhotoComposerOpen] = useState(false);
   const [fanPhotos, setFanPhotos] = useState<FanPhoto[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { data: upcomingMatches, isLoading: matchesLoading } = useListMatches({ status: "upcoming", limit: 5 });
   const { data: liveMatches } = useListMatches({ status: "live", limit: 3 });
@@ -81,18 +83,58 @@ export default function Feed() {
   return (
     <>
       <style>{`
-        .feed-grid { display: grid; grid-template-columns: 280px 1fr 360px; gap: 1.5rem; }
+        .feed-grid {
+          display: grid;
+          gap: 1.5rem;
+          transition: grid-template-columns 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+        .feed-right-panel {
+          overflow: hidden;
+          transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+        .feed-right-panel.closed {
+          opacity: 0;
+          transform: translateX(32px);
+          pointer-events: none;
+        }
         @media (max-width: 1100px) {
-          .feed-grid { grid-template-columns: 1fr 340px; }
           .feed-left  { display: none; }
         }
         @media (max-width: 768px) {
-          .feed-grid { grid-template-columns: 1fr; }
-          .feed-right { display: none; }
+          .feed-right { display: none !important; }
+          .sidebar-toggle-btn { display: none !important; }
         }
       `}</style>
 
-      <div className="feed-grid animate-in fade-in duration-500">
+      {/* ── Floating sidebar toggle tab ── */}
+      <button
+        onClick={() => setSidebarOpen((v) => !v)}
+        title={sidebarOpen ? "Minimise panel" : "Open Fan Hub"}
+        className="sidebar-toggle-btn fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-1.5 px-2 py-4 rounded-l-2xl border border-r-0 border-border/80 bg-card shadow-xl hover:bg-primary/10 hover:border-primary/50 transition-all duration-200 group"
+        style={{ boxShadow: "−4px 0 24px rgba(0,0,0,0.25)" }}
+      >
+        {sidebarOpen ? (
+          <ChevronRight className="h-4 w-4 text-primary" />
+        ) : (
+          <ChevronLeft className="h-4 w-4 text-primary" />
+        )}
+        <span
+          className="text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors"
+          style={{ writingMode: "vertical-rl", textOrientation: "mixed", letterSpacing: "0.18em" }}
+        >
+          {sidebarOpen ? "Minimise" : "Fan Hub"}
+        </span>
+        <PanelRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+      </button>
+
+      <div
+        className="feed-grid animate-in fade-in duration-500"
+        style={{
+          gridTemplateColumns: sidebarOpen
+            ? "280px 1fr 360px"
+            : "280px 1fr 0px",
+        }}
+      >
 
         {/* ══════════ LEFT SIDEBAR ══════════ */}
         <aside className="feed-left flex flex-col gap-1">
@@ -347,7 +389,8 @@ export default function Feed() {
         </main>
 
         {/* ══════════ RIGHT SIDEBAR ══════════ */}
-        <aside className="feed-right flex flex-col gap-5">
+        <aside className="feed-right overflow-hidden">
+        <div className={`feed-right-panel flex flex-col gap-5 w-[360px]${sidebarOpen ? "" : " closed"}`}>
 
           {/* WC 2026 Bracket Progress */}
           <BracketProgressWidget />
@@ -480,6 +523,7 @@ export default function Feed() {
               </Link>
             </div>
           )}
+        </div>{/* end feed-right-panel */}
         </aside>
 
       </div>
