@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Camera, Upload, X, Image as ImageIcon, Star } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,6 +92,9 @@ export default function FanPhotoComposer({ open, onClose, onPost, username, avat
           <DialogTitle className="font-heading uppercase tracking-widest text-sm text-foreground flex items-center gap-2">
             <Camera className="h-4 w-4 text-primary" /> Share Your Fan Moment
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Upload a photo in your fan jersey or with your GOAT player and add a caption.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 pt-4 pb-6 flex flex-col gap-4">

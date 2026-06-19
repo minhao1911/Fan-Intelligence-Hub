@@ -16,6 +16,7 @@ import {
 import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
 import FanMomentCard from "@/components/FanMomentCard";
 import TopFanGroupsWidget from "@/components/TopFanGroupsWidget";
+import FanOfTheMatch from "@/components/FanOfTheMatch";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -182,6 +183,9 @@ export default function Feed() {
               ))}
             </div>
           )}
+
+          {/* Fan of the Match */}
+          <FanOfTheMatch fanPhotos={fanPhotos} />
 
           {/* Daily challenges carousel */}
           <div className="flex flex-col gap-3">
