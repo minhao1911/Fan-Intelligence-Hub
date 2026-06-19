@@ -23,11 +23,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Feed",        href: "/feed",        icon: Home },
     { name: "Pulse",       href: "/pulse",        icon: Activity },
     { name: "Fixtures",    href: "/fixtures",     icon: ListOrdered },
-    { name: "Matches",     href: "/matches",      icon: CalendarDays },
     { name: "Nations",     href: "/nations",      icon: Globe },
-    { name: "Groups",      href: "/groups",       icon: UsersRound },
+    { name: "Matches",     href: "/matches",      icon: CalendarDays },
     { name: "Predictions", href: "/predictions",  icon: Target },
     { name: "Leaderboard", href: "/leaderboard",  icon: Trophy },
+    { name: "Groups",      href: "/groups",       icon: UsersRound },
     { name: "Profile",     href: "/profile",      icon: User },
   ];
 
