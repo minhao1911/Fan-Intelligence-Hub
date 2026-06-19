@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   useListMatches,
   useGetGlobalStats,
@@ -10,8 +11,10 @@ import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Activity, Clock, Globe, Trophy, Target, MessageSquare,
-  Users, Zap, Swords,
+  Users, Zap, Swords, Camera,
 } from "lucide-react";
+import FanPhotoComposer, { type FanPhoto } from "@/components/FanPhotoComposer";
+import FanMomentCard from "@/components/FanMomentCard";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -42,6 +45,9 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function Feed() {
+  const [photoComposerOpen, setPhotoComposerOpen] = useState(false);
+  const [fanPhotos, setFanPhotos] = useState<FanPhoto[]>([]);
+
   const { data: upcomingMatches, isLoading: matchesLoading } = useListMatches({ status: "upcoming", limit: 5 });
   const { data: liveMatches } = useListMatches({ status: "live", limit: 3 });
   const { data: stats } = useGetGlobalStats();
@@ -49,6 +55,16 @@ export default function Feed() {
   const { data: me } = useGetMe();
   const { data: leaderboard } = useGetLeaderboard({ limit: 5 });
   const { data: discussions } = useListDiscussions({ limit: 4 });
+
+  const handlePost = (photo: FanPhoto) => {
+    setFanPhotos((prev) => [photo, ...prev]);
+  };
+
+  const handleCheer = (id: string) => {
+    setFanPhotos((prev) =>
+      prev.map((p) => p.id === id ? { ...p, cheers: p.cheers + 1 } : p)
+    );
+  };
 
   const topNations = nations
     ? [...nations].sort((a, b) => (b.confidenceScore ?? 0) - (a.confidenceScore ?? 0)).slice(0, 5)
@@ -124,8 +140,8 @@ export default function Feed() {
             </div>
             <div className="flex items-center justify-around border-t border-border pt-3 gap-2">
               {[
-                { href: "/predictions", icon: Target,        label: "Quick Score Predictor" },
-                { href: "/pulse",       icon: Activity,      label: "Launch Nation Poll" },
+                { href: "/predictions", icon: Target,        label: "Quick Score" },
+                { href: "/pulse",       icon: Activity,      label: "Nation Poll" },
                 { href: "/discussions", icon: MessageSquare, label: "Post a Take" },
               ].map(({ href, icon: Icon, label }) => (
                 <Link key={href} href={href}>
@@ -134,8 +150,37 @@ export default function Feed() {
                   </button>
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={() => setPhotoComposerOpen(true)}
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-xs font-semibold cursor-pointer"
+              >
+                <Camera className="h-4 w-4" /> Fan Photo
+              </button>
             </div>
           </div>
+
+          {/* Fan photo composer dialog */}
+          <FanPhotoComposer
+            open={photoComposerOpen}
+            onClose={() => setPhotoComposerOpen(false)}
+            onPost={handlePost}
+            username={me?.username ?? "FanVerse User"}
+            avatarUrl={me?.avatarUrl ?? undefined}
+            nationCode={me?.nationCode ?? undefined}
+          />
+
+          {/* Fan Moments */}
+          {fanPhotos.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-sm font-heading font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                <Camera className="h-4 w-4" /> Fan Moments
+              </h2>
+              {fanPhotos.map((photo) => (
+                <FanMomentCard key={photo.id} photo={photo} onCheer={handleCheer} />
+              ))}
+            </div>
+          )}
 
           {/* Daily challenges carousel */}
           <div className="flex flex-col gap-3">
