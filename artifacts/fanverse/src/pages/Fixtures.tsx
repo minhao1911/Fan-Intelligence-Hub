@@ -254,7 +254,9 @@ function FixtureCard({ match, onClick }: { match: Fixture; onClick: () => void }
 function TeamBlock({ team, winner, loser, flip = false }: { team: Fixture["homeTeam"]; winner: boolean; loser: boolean; flip?: boolean }) {
   return (
     <div className={`flex-1 flex items-center gap-2 ${flip ? "flex-row-reverse text-right" : ""}`}>
-      {team.crest ? (
+      {team.flagEmoji ? (
+        <span className="text-2xl shrink-0 leading-none" role="img" aria-label={team.name}>{team.flagEmoji}</span>
+      ) : team.crest ? (
         <img src={team.crest} alt={team.name} className="w-8 h-8 object-contain shrink-0" />
       ) : (
         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-heading font-bold shrink-0">
@@ -375,7 +377,9 @@ function FixtureDetailDialog({ matchId, onClose }: { matchId: number; onClose: (
 function DetailTeam({ team }: { team: Fixture["homeTeam"] }) {
   return (
     <div className="flex-1 flex flex-col items-center gap-2">
-      {team.crest ? (
+      {team.flagEmoji ? (
+        <span className="text-4xl leading-none" role="img" aria-label={team.name}>{team.flagEmoji}</span>
+      ) : team.crest ? (
         <img src={team.crest} alt={team.name} className="w-12 h-12 object-contain" />
       ) : (
         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-sm font-heading font-bold">

@@ -7,7 +7,7 @@ const router: IRouter = Router();
 function nationToTeam(nation: typeof nationsTable.$inferSelect | undefined, fallbackCode: string) {
   const code = nation?.code ?? fallbackCode;
   const name = nation?.name ?? fallbackCode;
-  return { id: 0, name, shortName: name, crest: null, tla: code };
+  return { id: 0, name, shortName: name, crest: null, tla: code, flagEmoji: nation?.flagEmoji ?? null };
 }
 
 function mapDbStatus(status: string): "upcoming" | "live" | "completed" {

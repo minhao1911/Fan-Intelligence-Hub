@@ -7,6 +7,7 @@ export interface FixtureTeam {
   shortName: string;
   crest: string | null;
   tla: string;
+  flagEmoji: string | null;
 }
 
 export interface FixtureScore {
