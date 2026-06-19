@@ -44,7 +44,7 @@ export interface FixturesResponse {
 
 export interface StandingEntry {
   position: number;
-  team: FixtureTeam;
+  team: FixtureTeam & { flagEmoji: string | null };
   playedGames: number;
   won: number;
   draw: number;

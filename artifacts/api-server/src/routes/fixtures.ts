@@ -164,7 +164,7 @@ router.get("/fixtures/standings", async (req, res): Promise<void> => {
           .sort((a, b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)
           .map((t, i) => ({
             position: i + 1,
-            team: { id: 0, name: nationMap[t.code]?.name ?? t.code, shortName: nationMap[t.code]?.name ?? t.code, crest: null, tla: t.code },
+            team: { id: 0, name: nationMap[t.code]?.name ?? t.code, shortName: nationMap[t.code]?.name ?? t.code, crest: null, tla: t.code, flagEmoji: nationMap[t.code]?.flagEmoji ?? null },
             playedGames: t.played,
             won: t.won,
             draw: t.draw,
