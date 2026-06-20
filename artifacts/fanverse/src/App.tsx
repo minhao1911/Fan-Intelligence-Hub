@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
@@ -6,6 +6,7 @@ import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wo
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
+import SplashScreen from "./components/SplashScreen";
 
 import Landing from "./pages/Landing";
 import Feed from "./pages/Feed";
@@ -217,9 +218,17 @@ function ClerkProviderWithRoutes() {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashComplete = useCallback(() => setSplashDone(true), []);
+
   return (
-    <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
-    </WouterRouter>
+    <>
+      {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
+      <div style={{ opacity: splashDone ? 1 : 0, transition: "opacity 0.3s ease-in" }}>
+        <WouterRouter base={basePath}>
+          <ClerkProviderWithRoutes />
+        </WouterRouter>
+      </div>
+    </>
   );
 }
