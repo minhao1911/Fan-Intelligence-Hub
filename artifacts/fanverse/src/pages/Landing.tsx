@@ -39,6 +39,163 @@ export default function Landing() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_30%_at_50%_105%,rgba(250,204,21,0.05),transparent)]" />
           <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage:"linear-gradient(rgba(250,204,21,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(250,204,21,0.4) 1px,transparent 1px)", backgroundSize:"60px 60px"}} />
 
+          {/* Star player silhouettes */}
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+
+            {/* LEFT: Messi — low dribble pose */}
+            <div className="absolute bottom-0 left-[-2%] lg:left-[2%] flex flex-col items-center opacity-0 lg:opacity-100">
+              <svg viewBox="0 0 180 420" className="h-[340px] xl:h-[400px]" fill="none">
+                <defs>
+                  <linearGradient id="messiGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(250,204,21,0.18)" />
+                    <stop offset="60%" stopColor="rgba(250,204,21,0.09)" />
+                    <stop offset="100%" stopColor="rgba(250,204,21,0)" />
+                  </linearGradient>
+                  <filter id="messiGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                {/* Head */}
+                <ellipse cx="85" cy="38" rx="22" ry="25" fill="url(#messiGrad)" filter="url(#messiGlow)"/>
+                {/* Neck */}
+                <rect x="79" y="60" width="12" height="18" rx="5" fill="url(#messiGrad)"/>
+                {/* Torso — leaning forward */}
+                <path d="M 60 78 Q 85 72 110 80 L 105 145 Q 85 152 65 144 Z" fill="url(#messiGrad)"/>
+                {/* Left arm — reaching down toward ball */}
+                <path d="M 65 90 Q 40 118 28 145 Q 32 150 38 148 Q 52 122 70 98 Z" fill="url(#messiGrad)"/>
+                {/* Right arm — back for balance */}
+                <path d="M 108 88 Q 132 105 148 118 Q 144 124 138 121 Q 124 108 104 94 Z" fill="url(#messiGrad)"/>
+                {/* Left leg — planted */}
+                <path d="M 68 144 Q 60 195 55 250 Q 62 255 70 252 Q 76 198 82 148 Z" fill="url(#messiGrad)"/>
+                {/* Left shin / boot */}
+                <path d="M 55 250 Q 48 295 44 330 Q 38 332 34 328 Q 34 295 44 248 Z" fill="url(#messiGrad)"/>
+                <path d="M 24 325 Q 32 340 52 336 Q 56 328 44 328 Z" fill="url(#messiGrad)"/>
+                {/* Right leg — dribbling, bent forward */}
+                <path d="M 88 146 Q 95 188 108 222 Q 115 225 120 220 Q 108 185 98 148 Z" fill="url(#messiGrad)"/>
+                {/* Right shin */}
+                <path d="M 108 222 Q 120 262 128 295 Q 136 296 138 290 Q 130 258 120 218 Z" fill="url(#messiGrad)"/>
+                <path d="M 118 290 Q 130 308 148 302 Q 148 294 138 290 Z" fill="url(#messiGrad)"/>
+                {/* Ball */}
+                <circle cx="38" cy="355" r="22" fill="none" stroke="rgba(250,204,21,0.3)" strokeWidth="2.5"/>
+                <path d="M 38 333 Q 52 343 60 355 Q 52 367 38 377 Q 24 367 16 355 Q 24 343 38 333 Z" fill="rgba(250,204,21,0.06)"/>
+                <line x1="38" y1="333" x2="38" y2="377" stroke="rgba(250,204,21,0.18)" strokeWidth="1.2"/>
+                <line x1="16" y1="355" x2="60" y2="355" stroke="rgba(250,204,21,0.18)" strokeWidth="1.2"/>
+                <path d="M 22 338 Q 38 333 54 338" stroke="rgba(250,204,21,0.15)" strokeWidth="1" fill="none"/>
+                <path d="M 22 372 Q 38 377 54 372" stroke="rgba(250,204,21,0.15)" strokeWidth="1" fill="none"/>
+              </svg>
+              <span className="font-heading font-black uppercase tracking-[0.3em] text-[10px] text-primary/40 mt-1">Messi</span>
+            </div>
+
+            {/* RIGHT: Ronaldo — free kick stance */}
+            <div className="absolute bottom-0 right-[-2%] lg:right-[2%] flex flex-col items-center opacity-0 lg:opacity-100">
+              <svg viewBox="0 0 180 420" className="h-[340px] xl:h-[400px]" fill="none">
+                <defs>
+                  <linearGradient id="ronaldoGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(250,204,21,0.18)" />
+                    <stop offset="60%" stopColor="rgba(250,204,21,0.09)" />
+                    <stop offset="100%" stopColor="rgba(250,204,21,0)" />
+                  </linearGradient>
+                  <filter id="ronaldoGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                {/* Head — upright, chin up */}
+                <ellipse cx="90" cy="36" rx="22" ry="25" fill="url(#ronaldoGrad)" filter="url(#ronaldoGlow)"/>
+                {/* Neck */}
+                <rect x="83" y="58" width="14" height="18" rx="5" fill="url(#ronaldoGrad)"/>
+                {/* Torso — chest puffed, upright */}
+                <path d="M 58 76 Q 90 68 122 76 L 116 148 Q 90 158 64 148 Z" fill="url(#ronaldoGrad)"/>
+                {/* Left arm — wide out */}
+                <path d="M 62 88 Q 34 108 18 128 Q 23 134 29 130 Q 44 112 66 96 Z" fill="url(#ronaldoGrad)"/>
+                {/* Right arm — wide out other side */}
+                <path d="M 116 88 Q 144 108 160 128 Q 155 134 149 130 Q 134 112 112 96 Z" fill="url(#ronaldoGrad)"/>
+                {/* Left leg — planted, weight on it */}
+                <path d="M 66 148 Q 58 200 56 258 Q 64 262 72 258 Q 74 200 80 150 Z" fill="url(#ronaldoGrad)"/>
+                {/* Left shin */}
+                <path d="M 56 258 Q 52 300 50 332 Q 44 334 40 330 Q 40 296 50 256 Z" fill="url(#ronaldoGrad)"/>
+                <path d="M 30 326 Q 40 342 62 338 Q 64 330 50 330 Z" fill="url(#ronaldoGrad)"/>
+                {/* Right leg — cocked back for power kick */}
+                <path d="M 100 150 Q 112 185 122 215 Q 130 215 133 208 Q 122 178 108 148 Z" fill="url(#ronaldoGrad)"/>
+                {/* Right shin — kicked back */}
+                <path d="M 122 215 Q 138 248 148 272 Q 156 270 157 263 Q 146 238 130 210 Z" fill="url(#ronaldoGrad)"/>
+                <path d="M 140 262 Q 152 278 166 270 Q 164 262 157 263 Z" fill="url(#ronaldoGrad)"/>
+              </svg>
+              <span className="font-heading font-black uppercase tracking-[0.3em] text-[10px] text-primary/40 mt-1">Ronaldo</span>
+            </div>
+
+            {/* FAR LEFT (xl only): Mbappé — sprint pose */}
+            <div className="absolute bottom-0 left-[-4%] xl:left-[-1%] flex flex-col items-center opacity-0 xl:opacity-60">
+              <svg viewBox="0 0 140 380" className="h-[280px] xl:h-[340px]" fill="none">
+                <defs>
+                  <linearGradient id="mbappeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(250,204,21,0.12)" />
+                    <stop offset="100%" stopColor="rgba(250,204,21,0)" />
+                  </linearGradient>
+                </defs>
+                {/* Head — forward lean */}
+                <ellipse cx="72" cy="34" rx="20" ry="22" fill="url(#mbappeGrad)"/>
+                <rect x="67" y="53" width="10" height="15" rx="4" fill="url(#mbappeGrad)"/>
+                {/* Torso leaning forward aggressively */}
+                <path d="M 48 68 Q 72 60 96 70 L 90 128 Q 72 136 54 127 Z" fill="url(#mbappeGrad)"/>
+                {/* Arms pumping */}
+                <path d="M 52 80 Q 28 100 16 118 Q 20 124 26 120 Q 38 104 56 88 Z" fill="url(#mbappeGrad)"/>
+                <path d="M 90 78 Q 114 92 124 110 Q 120 116 114 112 Q 104 96 86 84 Z" fill="url(#mbappeGrad)"/>
+                {/* Left leg pushing off */}
+                <path d="M 56 127 Q 50 170 48 214 Q 56 218 63 214 Q 65 170 70 130 Z" fill="url(#mbappeGrad)"/>
+                <path d="M 48 214 Q 44 248 42 272 Q 36 274 32 270 Q 34 244 42 212 Z" fill="url(#mbappeGrad)"/>
+                <path d="M 24 266 Q 34 280 50 275 Q 52 268 42 270 Z" fill="url(#mbappeGrad)"/>
+                {/* Right leg high stride */}
+                <path d="M 76 130 Q 90 160 100 186 Q 108 184 110 178 Q 98 152 84 128 Z" fill="url(#mbappeGrad)"/>
+                <path d="M 100 186 Q 112 210 116 232 Q 122 232 124 226 Q 118 202 108 182 Z" fill="url(#mbappeGrad)"/>
+                <path d="M 108 226 Q 118 240 130 234 Q 128 226 124 226 Z" fill="url(#mbappeGrad)"/>
+              </svg>
+              <span className="font-heading font-black uppercase tracking-[0.3em] text-[9px] text-primary/25 mt-1">Mbappé</span>
+            </div>
+
+            {/* FAR RIGHT (xl only): Neymar — skill move */}
+            <div className="absolute bottom-0 right-[-4%] xl:right-[-1%] flex flex-col items-center opacity-0 xl:opacity-60">
+              <svg viewBox="0 0 140 380" className="h-[280px] xl:h-[340px]" fill="none">
+                <defs>
+                  <linearGradient id="neymarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(250,204,21,0.12)" />
+                    <stop offset="100%" stopColor="rgba(250,204,21,0)" />
+                  </linearGradient>
+                </defs>
+                {/* Head — tilted, showboating */}
+                <ellipse cx="75" cy="36" rx="20" ry="22" fill="url(#neymarGrad)"/>
+                <rect x="70" y="55" width="10" height="14" rx="4" fill="url(#neymarGrad)"/>
+                {/* Torso — twisted */}
+                <path d="M 52 70 Q 75 63 100 72 L 94 132 Q 75 140 56 131 Z" fill="url(#neymarGrad)"/>
+                {/* Arms — one up flair */}
+                <path d="M 56 82 Q 36 95 24 106 Q 28 112 34 108 Q 46 99 60 88 Z" fill="url(#neymarGrad)"/>
+                <path d="M 92 78 Q 112 60 122 46 Q 128 50 126 56 Q 116 68 98 84 Z" fill="url(#neymarGrad)"/>
+                {/* Left leg */}
+                <path d="M 58 131 Q 52 175 50 222 Q 58 226 65 222 Q 67 176 72 134 Z" fill="url(#neymarGrad)"/>
+                <path d="M 50 222 Q 46 258 44 280 Q 38 282 34 278 Q 36 252 44 220 Z" fill="url(#neymarGrad)"/>
+                <path d="M 26 274 Q 36 288 54 284 Q 56 276 44 278 Z" fill="url(#neymarGrad)"/>
+                {/* Right leg — flicking ball */}
+                <path d="M 80 134 Q 92 165 104 190 Q 112 188 114 182 Q 100 156 88 132 Z" fill="url(#neymarGrad)"/>
+                <path d="M 104 190 Q 116 215 122 238 Q 128 237 130 231 Q 122 206 112 186 Z" fill="url(#neymarGrad)"/>
+                <path d="M 114 232 Q 124 246 136 240 Q 134 232 130 231 Z" fill="url(#neymarGrad)"/>
+                {/* Ball at feet */}
+                <circle cx="124" cy="300" r="18" fill="none" stroke="rgba(250,204,21,0.22)" strokeWidth="2"/>
+                <line x1="124" y1="282" x2="124" y2="318" stroke="rgba(250,204,21,0.14)" strokeWidth="1"/>
+                <line x1="106" y1="300" x2="142" y2="300" stroke="rgba(250,204,21,0.14)" strokeWidth="1"/>
+              </svg>
+              <span className="font-heading font-black uppercase tracking-[0.3em] text-[9px] text-primary/25 mt-1">Neymar</span>
+            </div>
+
+            {/* Ground line glow */}
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/60 to-transparent" />
+
+            {/* Spotlight effects under each player */}
+            <div className="absolute bottom-0 left-[8%] lg:left-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" />
+            <div className="absolute bottom-0 right-[8%] lg:right-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" />
+          </div>
+
           <div className="relative z-10 max-w-4xl mx-auto">
             {/* Live badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-bold uppercase tracking-widest mb-8">
