@@ -14,8 +14,11 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LiveScoreTicker from "@/components/LiveScoreTicker";
+import { Toaster } from "@/components/ui/sonner";
+import { useMatchNotifications } from "@/hooks/useMatchNotifications";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  useMatchNotifications();
   const [location] = useLocation();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
@@ -51,6 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <Toaster />
 
       {/* ── Top Navigation Bar ─────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border/60 flex items-center px-3 md:px-6 gap-3">
