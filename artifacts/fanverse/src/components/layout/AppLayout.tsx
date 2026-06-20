@@ -4,7 +4,7 @@ import {
   Star, ListOrdered, UsersRound, Target, Bell, MessageSquare,
   Search, ChevronDown
 } from "lucide-react";
-import { useClerk } from "@clerk/react";
+import { useClerk, useUser } from "@clerk/react";
 import { useGetMe, useListMatches } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ import LiveScoreTicker from "@/components/LiveScoreTicker";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { signOut } = useClerk();
+  const { user: clerkUser } = useUser();
   const { data: user } = useGetMe();
   const { data: liveMatches } = useListMatches(
     { status: "live", limit: 1 },
@@ -139,9 +140,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 ml-1 pl-2 pr-1 py-1 rounded-full hover:bg-muted/70 transition-colors">
                 <Avatar className="h-7 w-7 border border-border shrink-0">
-                  <AvatarImage src={user?.avatarUrl || undefined} />
+                  <AvatarImage src={user?.avatarUrl || clerkUser?.imageUrl || undefined} />
                   <AvatarFallback className="bg-muted text-muted-foreground font-heading text-[10px]">
-                    {user?.username.substring(0, 2).toUpperCase() ?? "??"}
+                    {user?.username
+                      ? user.username.substring(0, 2).toUpperCase()
+                      : clerkUser?.firstName && clerkUser?.lastName
+                      ? (clerkUser.firstName[0] + clerkUser.lastName[0]).toUpperCase()
+                      : clerkUser?.firstName
+                      ? clerkUser.firstName.substring(0, 2).toUpperCase()
+                      : clerkUser?.emailAddresses?.[0]?.emailAddress?.substring(0, 2).toUpperCase()
+                      ?? "ME"}
                   </AvatarFallback>
                 </Avatar>
                 {user && (
