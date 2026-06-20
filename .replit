@@ -96,3 +96,4 @@ channel = "stable-25_05"
 [userenv.shared]
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_cHJlc2VudC1waXBlZmlzaC0xNy5jbGVyay5hY2NvdW50cy5kZXYk"
 VITE_CLERK_PROXY_URL = "/api/__clerk"
+CLERK_PUBLISHABLE_KEY = "pk_test_cHJlc2VudC1waXBlZmlzaC0xNy5jbGVyay5hY2NvdW50cy5kZXYk"

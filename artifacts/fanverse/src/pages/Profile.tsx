@@ -539,7 +539,7 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
 
 export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
-  const { data: user, isLoading } = useGetMe();
+  const { data: user, isLoading, isError } = useGetMe();
 
   if (isLoading) {
     return (
@@ -552,7 +552,20 @@ export default function Profile() {
     );
   }
 
-  if (!user) return null;
+  if (isError || !user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-4">
+        <div className="text-5xl">⚠️</div>
+        <h2 className="text-2xl font-heading uppercase text-foreground">Could not load profile</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          There was a problem fetching your profile. Try refreshing the page or signing out and back in.
+        </p>
+        <Link href="/feed" className="text-primary text-sm font-bold hover:underline">
+          ← Back to Feed
+        </Link>
+      </div>
+    );
+  }
 
   const pointsByActivity = [
     { label: "Poll Votes", value: user.totalVotes * 5, count: user.totalVotes, icon: <Vote className="h-4 w-4 text-primary" /> },
