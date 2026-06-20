@@ -205,3 +205,8 @@
   0%, 100% { opacity: 0.5; transform: scaleX(1); }
   50%       { opacity: 0.85; transform: scaleX(1.15); }
 }
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

@@ -1,7 +1,96 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useGetGlobalStats } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, Activity, Users, BarChart3, Shield, Star, Zap } from "lucide-react";
+
+type TickerMatch = {
+  id: number;
+  homeNationFlag: string;
+  homeNationName: string;
+  awayNationFlag: string;
+  awayNationName: string;
+  status: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  homeConfidence: number | null;
+  awayConfidence: number | null;
+  stage: string;
+};
+
+function MatchTicker() {
+  const [matches, setMatches] = useState<TickerMatch[]>([]);
+
+  useEffect(() => {
+    fetch("/api/matches")
+      .then((r) => r.json())
+      .then((data: TickerMatch[]) => setMatches(data.slice(0, 12)))
+      .catch(() => {});
+  }, []);
+
+  if (matches.length === 0) return null;
+
+  const doubled = [...matches, ...matches];
+
+  return (
+    <div className="relative overflow-hidden border-b border-primary/10 bg-black/30 backdrop-blur-sm z-40">
+      {/* Left fade */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black/60 to-transparent z-10 pointer-events-none" />
+      {/* Right fade */}
+      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black/60 to-transparent z-10 pointer-events-none" />
+
+      {/* LIVE label */}
+      <div className="absolute left-0 top-0 bottom-0 flex items-center z-20 pl-3 pr-4 bg-gradient-to-r from-background via-background/95 to-transparent">
+        <span className="flex items-center gap-1.5 font-heading font-black text-[10px] uppercase tracking-widest text-primary whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
+          Live
+        </span>
+      </div>
+
+      <div className="flex" style={{ animation: "ticker-scroll 60s linear infinite", width: "max-content" }}>
+        {doubled.map((m, i) => {
+          const isLive = m.status === "live";
+          const isCompleted = m.status === "completed";
+          return (
+            <div
+              key={`${m.id}-${i}`}
+              className="flex items-center gap-2 px-5 py-2 border-r border-white/5 shrink-0"
+            >
+              {/* Status dot */}
+              <span className={`w-1 h-1 rounded-full shrink-0 ${isLive ? "bg-red-500 animate-pulse" : isCompleted ? "bg-muted-foreground/40" : "bg-primary/40"}`} />
+
+              {/* Home */}
+              <span className="text-sm leading-none">{m.homeNationFlag}</span>
+              <span className={`font-heading font-bold text-[11px] uppercase tracking-wide ${isLive || isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
+                {m.homeNationName.split(" ").pop()}
+              </span>
+
+              {/* Score or confidence */}
+              {isCompleted || isLive ? (
+                <span className={`font-heading font-black text-xs px-1.5 py-0.5 rounded ${isLive ? "bg-red-500/15 text-red-400" : "bg-muted/50 text-foreground"}`}>
+                  {m.homeScore ?? 0} – {m.awayScore ?? 0}
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] text-primary/60 px-1.5 py-0.5 rounded bg-primary/5">
+                  {m.homeConfidence != null ? `${Math.round(m.homeConfidence)}%` : "vs"}
+                </span>
+              )}
+
+              {/* Away */}
+              <span className={`font-heading font-bold text-[11px] uppercase tracking-wide ${isLive || isCompleted ? "text-foreground" : "text-muted-foreground"}`}>
+                {m.awayNationName.split(" ").pop()}
+              </span>
+              <span className="text-sm leading-none">{m.awayNationFlag}</span>
+
+              {/* Stage label */}
+              <span className="text-[9px] text-muted-foreground/40 font-mono ml-1 hidden sm:inline">{m.stage}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function Landing() {
   const { data: stats, isLoading } = useGetGlobalStats();
@@ -30,6 +119,8 @@ export default function Landing() {
           </Link>
         </div>
       </header>
+
+      <MatchTicker />
 
       <main className="flex-1 flex flex-col">
         {/* Hero */}
