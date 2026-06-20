@@ -43,7 +43,7 @@ export default function Landing() {
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
 
             {/* LEFT: Messi — low dribble pose */}
-            <div className="absolute bottom-0 left-[-2%] lg:left-[2%] flex flex-col items-center opacity-0 lg:opacity-100">
+            <div className="absolute bottom-0 left-[-2%] lg:left-[2%] flex flex-col items-center opacity-0 lg:opacity-100" style={{animation:"player-sway 7s ease-in-out infinite", transformOrigin:"bottom center"}}>
               <svg viewBox="0 0 180 420" className="h-[340px] xl:h-[400px]" fill="none">
                 <defs>
                   <linearGradient id="messiGrad" x1="0" y1="0" x2="0" y2="1">
@@ -88,7 +88,7 @@ export default function Landing() {
             </div>
 
             {/* RIGHT: Ronaldo — free kick stance */}
-            <div className="absolute bottom-0 right-[-2%] lg:right-[2%] flex flex-col items-center opacity-0 lg:opacity-100">
+            <div className="absolute bottom-0 right-[-2%] lg:right-[2%] flex flex-col items-center opacity-0 lg:opacity-100" style={{animation:"player-float 8s ease-in-out 1.5s infinite", transformOrigin:"bottom center"}}>
               <svg viewBox="0 0 180 420" className="h-[340px] xl:h-[400px]" fill="none">
                 <defs>
                   <linearGradient id="ronaldoGrad" x1="0" y1="0" x2="0" y2="1">
@@ -126,7 +126,7 @@ export default function Landing() {
             </div>
 
             {/* FAR LEFT (xl only): Mbappé — sprint pose */}
-            <div className="absolute bottom-0 left-[-4%] xl:left-[-1%] flex flex-col items-center opacity-0 xl:opacity-60">
+            <div className="absolute bottom-0 left-[-4%] xl:left-[-1%] flex flex-col items-center opacity-0 xl:opacity-60" style={{animation:"player-breathe 6s ease-in-out 0.8s infinite", transformOrigin:"bottom center"}}>
               <svg viewBox="0 0 140 380" className="h-[280px] xl:h-[340px]" fill="none">
                 <defs>
                   <linearGradient id="mbappeGrad" x1="0" y1="0" x2="0" y2="1">
@@ -155,7 +155,7 @@ export default function Landing() {
             </div>
 
             {/* FAR RIGHT (xl only): Neymar — skill move */}
-            <div className="absolute bottom-0 right-[-4%] xl:right-[-1%] flex flex-col items-center opacity-0 xl:opacity-60">
+            <div className="absolute bottom-0 right-[-4%] xl:right-[-1%] flex flex-col items-center opacity-0 xl:opacity-60" style={{animation:"player-sway 9s ease-in-out 2.2s infinite", transformOrigin:"bottom center"}}>
               <svg viewBox="0 0 140 380" className="h-[280px] xl:h-[340px]" fill="none">
                 <defs>
                   <linearGradient id="neymarGrad" x1="0" y1="0" x2="0" y2="1">
@@ -192,8 +192,8 @@ export default function Landing() {
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/60 to-transparent" />
 
             {/* Spotlight effects under each player */}
-            <div className="absolute bottom-0 left-[8%] lg:left-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" />
-            <div className="absolute bottom-0 right-[8%] lg:right-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" />
+            <div className="absolute bottom-0 left-[8%] lg:left-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" style={{animation:"spotlight-pulse 7s ease-in-out infinite"}} />
+            <div className="absolute bottom-0 right-[8%] lg:right-[10%] w-48 h-32 bg-[radial-gradient(ellipse_at_bottom,rgba(250,204,21,0.08),transparent_70%)] hidden lg:block" style={{animation:"spotlight-pulse 8s ease-in-out 1.5s infinite"}} />
           </div>
 
           <div className="relative z-10 max-w-4xl mx-auto">
