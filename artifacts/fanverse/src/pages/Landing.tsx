@@ -4,6 +4,91 @@ import { useGetGlobalStats } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, Activity, Users, BarChart3, Shield, Star, Zap } from "lucide-react";
 
+const FOOTBALL_SVG = (
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:"100%",height:"100%"}}>
+    <circle cx="50" cy="50" r="46" stroke="rgba(250,204,21,0.6)" strokeWidth="4" fill="none"/>
+    <polygon points="50,18 62,28 58,42 42,42 38,28" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.5)" strokeWidth="2.5"/>
+    <polygon points="18,38 30,32 38,42 32,56 18,54" fill="rgba(250,204,21,0.10)" stroke="rgba(250,204,21,0.4)" strokeWidth="2.5"/>
+    <polygon points="82,38 70,32 62,42 68,56 82,54" fill="rgba(250,204,21,0.10)" stroke="rgba(250,204,21,0.4)" strokeWidth="2.5"/>
+    <polygon points="26,72 32,58 42,58 50,68 44,80" fill="rgba(250,204,21,0.10)" stroke="rgba(250,204,21,0.4)" strokeWidth="2.5"/>
+    <polygon points="74,72 68,58 58,58 50,68 56,80" fill="rgba(250,204,21,0.10)" stroke="rgba(250,204,21,0.4)" strokeWidth="2.5"/>
+    <line x1="50" y1="18" x2="38" y2="28" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+    <line x1="50" y1="18" x2="62" y2="28" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+    <line x1="18" y1="38" x2="30" y2="32" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+    <line x1="82" y1="38" x2="70" y2="32" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+    <line x1="26" y1="72" x2="32" y2="58" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+    <line x1="74" y1="72" x2="68" y2="58" stroke="rgba(250,204,21,0.3)" strokeWidth="1.5"/>
+  </svg>
+);
+
+const STAR_SVG = (
+  <svg viewBox="0 0 24 24" fill="none" style={{width:"100%",height:"100%"}}>
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" fill="rgba(250,204,21,0.35)" stroke="rgba(250,204,21,0.5)" strokeWidth="0.8"/>
+  </svg>
+);
+
+type Particle = {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  duration: number;
+  delay: number;
+  anim: string;
+  type: "ball" | "star";
+};
+
+const PARTICLES: Particle[] = [
+  { id:1,  x:5,   y:90,  size:28, duration:18, delay:0,    anim:"football-drift-a", type:"ball" },
+  { id:2,  x:15,  y:85,  size:16, duration:22, delay:3,    anim:"football-drift-b", type:"star" },
+  { id:3,  x:25,  y:95,  size:22, duration:20, delay:6,    anim:"football-drift-c", type:"ball" },
+  { id:4,  x:38,  y:88,  size:14, duration:25, delay:1,    anim:"football-drift-a", type:"star" },
+  { id:5,  x:50,  y:92,  size:32, duration:16, delay:8,    anim:"football-drift-b", type:"ball" },
+  { id:6,  x:62,  y:87,  size:18, duration:23, delay:4,    anim:"football-drift-c", type:"star" },
+  { id:7,  x:72,  y:94,  size:24, duration:19, delay:10,   anim:"football-drift-a", type:"ball" },
+  { id:8,  x:83,  y:89,  size:12, duration:27, delay:2,    anim:"football-drift-b", type:"star" },
+  { id:9,  x:91,  y:93,  size:20, duration:21, delay:7,    anim:"football-drift-c", type:"ball" },
+  { id:10, x:8,   y:60,  size:14, duration:24, delay:12,   anim:"football-drift-b", type:"star" },
+  { id:11, x:20,  y:65,  size:26, duration:17, delay:5,    anim:"football-drift-a", type:"ball" },
+  { id:12, x:33,  y:70,  size:10, duration:29, delay:14,   anim:"football-drift-c", type:"star" },
+  { id:13, x:47,  y:62,  size:18, duration:22, delay:9,    anim:"football-drift-b", type:"ball" },
+  { id:14, x:58,  y:68,  size:30, duration:15, delay:0,    anim:"football-drift-a", type:"ball" },
+  { id:15, x:70,  y:63,  size:12, duration:26, delay:11,   anim:"football-drift-c", type:"star" },
+  { id:16, x:80,  y:72,  size:22, duration:20, delay:6,    anim:"football-drift-b", type:"ball" },
+  { id:17, x:93,  y:66,  size:16, duration:23, delay:3,    anim:"football-drift-a", type:"star" },
+  { id:18, x:12,  y:40,  size:10, duration:28, delay:16,   anim:"football-drift-c", type:"star" },
+  { id:19, x:30,  y:45,  size:20, duration:18, delay:13,   anim:"football-drift-a", type:"ball" },
+  { id:20, x:55,  y:42,  size:14, duration:25, delay:7,    anim:"football-drift-b", type:"star" },
+  { id:21, x:76,  y:48,  size:26, duration:16, delay:2,    anim:"football-drift-c", type:"ball" },
+  { id:22, x:88,  y:44,  size:10, duration:30, delay:18,   anim:"football-drift-a", type:"star" },
+  { id:23, x:42,  y:30,  size:18, duration:21, delay:15,   anim:"football-drift-b", type:"ball" },
+  { id:24, x:65,  y:35,  size:12, duration:27, delay:10,   anim:"football-drift-c", type:"star" },
+];
+
+function FootballParticles() {
+  return (
+    <div className="fixed inset-0 pointer-events-none select-none overflow-hidden z-0" aria-hidden>
+      {PARTICLES.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            animation: `${p.anim} ${p.duration}s linear ${p.delay}s infinite`,
+            willChange: "transform, opacity",
+            filter: p.type === "ball" ? "drop-shadow(0 0 4px rgba(250,204,21,0.25))" : "none",
+          }}
+        >
+          {p.type === "ball" ? FOOTBALL_SVG : STAR_SVG}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type TickerMatch = {
   id: number;
   homeNationFlag: string;
@@ -97,6 +182,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col">
+      <FootballParticles />
       {/* Header */}
       <header className="px-6 lg:px-12 py-4 flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-3">
