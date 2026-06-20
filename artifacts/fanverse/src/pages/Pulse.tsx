@@ -81,7 +81,7 @@ function NationVotePanel({ code, onVoted }: { code: string; onVoted: () => void 
         </div>
       ))}
 
-      <div className="grid grid-cols-5 gap-1.5 pt-1">
+      <div className="grid grid-cols-5 gap-1 sm:gap-1.5 pt-1">
         {LEVELS.map((lvl) => {
           const isMyVote = conf.myVote === lvl.level;
           return (
@@ -89,16 +89,16 @@ function NationVotePanel({ code, onVoted }: { code: string; onVoted: () => void 
               key={lvl.level}
               disabled={vote.isPending}
               onClick={() => handleVote(lvl.level)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-center transition-all duration-150 cursor-pointer ${
+              className={`flex flex-col items-center gap-0.5 sm:gap-1 p-1.5 sm:p-2 rounded-lg border text-center transition-all duration-150 cursor-pointer ${
                 isMyVote
                   ? "ring-2 ring-primary scale-105 " + lvl.color
                   : lvl.color
               }`}
             >
-              <span className="text-xl">{lvl.emoji}</span>
-              <span className="text-[10px] font-bold leading-tight">{lvl.label}</span>
+              <span className="text-xl sm:text-xl">{lvl.emoji}</span>
+              <span className="hidden sm:block text-[10px] font-bold leading-tight">{lvl.label}</span>
               {lvl.xp > 0 && (
-                <span className="text-[9px] font-mono text-primary">+{lvl.xp} XP</span>
+                <span className="text-[9px] font-mono text-primary">+{lvl.xp}</span>
               )}
             </button>
           );
@@ -344,7 +344,7 @@ export default function Pulse() {
           <Activity className="w-5 h-5" />
           <span className="font-heading font-bold uppercase tracking-widest text-xs">Fan Confidence Intelligence</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-heading font-bold uppercase text-foreground">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold uppercase text-foreground">
           Nation Confidence Wars
         </h1>
         <p className="text-muted-foreground mt-3 text-base max-w-2xl">

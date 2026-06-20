@@ -207,14 +207,14 @@ export default function MatchDetail() {
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {myReaction ? "Reaction logged · +3 pts" : "How do you feel? · +3 pts"}
               </p>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                 {REACTIONS.map((r) => (
                   <button
                     key={r.type}
                     onClick={() => handleReaction(r.type)}
                     disabled={!!myReaction}
                     title={r.label}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border transition-all ${
                       myReaction === r.type
                         ? "border-primary bg-primary/10 scale-110"
                         : myReaction
@@ -222,8 +222,8 @@ export default function MatchDetail() {
                         : "border-border hover:border-primary/50 hover:bg-muted/50 hover:scale-105"
                     }`}
                   >
-                    <span className="text-2xl">{r.emoji}</span>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-tight">
+                    <span className="text-xl sm:text-2xl">{r.emoji}</span>
+                    <span className="hidden sm:block text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-tight text-center">
                       {r.label}
                     </span>
                   </button>

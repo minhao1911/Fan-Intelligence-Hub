@@ -513,7 +513,7 @@ export default function Predictions() {
         <div className="relative px-6 py-7">
           <div className="flex items-center gap-3 mb-1">
             <Target className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-heading font-bold uppercase text-foreground tracking-tight">Predictions</h1>
+            <h1 className="text-2xl sm:text-4xl font-heading font-bold uppercase text-foreground tracking-tight">Predictions</h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
             Lock in your scorelines, earn XP when you're right, and climb the leaderboard.

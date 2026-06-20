@@ -101,9 +101,11 @@ export default function Feed() {
           pointer-events: none;
         }
         @media (max-width: 1100px) {
+          .feed-grid  { grid-template-columns: 1fr 360px !important; }
           .feed-left  { display: none; }
         }
         @media (max-width: 768px) {
+          .feed-grid  { grid-template-columns: 1fr !important; }
           .feed-right { display: none !important; }
           .sidebar-toggle-btn { display: none !important; }
         }
@@ -116,11 +118,11 @@ export default function Feed() {
         myUsername={me?.username ?? undefined}
       />
 
-      {/* ── Floating chat toggle tab (left edge) ── */}
+      {/* ── Floating chat toggle tab (left edge) — desktop only ── */}
       <button
         onClick={() => setChatOpen((v) => !v)}
         title={chatOpen ? "Close chat" : "Open Fan Live Chat"}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-1.5 px-2 py-4 rounded-r-2xl border border-l-0 border-border/80 bg-card shadow-xl hover:bg-primary/10 hover:border-primary/50 transition-all duration-200 group"
+        className="hidden sm:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 flex-col items-center gap-1.5 px-2 py-4 rounded-r-2xl border border-l-0 border-border/80 bg-card shadow-xl hover:bg-primary/10 hover:border-primary/50 transition-all duration-200 group"
         style={{ marginTop: chatOpen ? 0 : 64 }}
       >
         {chatOpen ? (

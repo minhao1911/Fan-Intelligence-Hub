@@ -157,7 +157,7 @@ export default function Leaderboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-heading font-black uppercase tracking-tight text-foreground flex items-center gap-3">
+          <h1 className="text-2xl sm:text-4xl font-heading font-black uppercase tracking-tight text-foreground flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
               <Trophy className="w-5 h-5 text-primary" />
             </div>

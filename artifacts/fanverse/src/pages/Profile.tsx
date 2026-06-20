@@ -218,41 +218,45 @@ function PredictionRow({ entry }: { entry: PredictionEntry }) {
   }[status];
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-card hover:border-primary/20 transition-colors">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-4 py-3 rounded-xl border border-border/50 bg-card hover:border-primary/20 transition-colors">
+      {/* Row 1 (always visible): match info */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="text-2xl leading-none shrink-0">{match.homeNationFlag}</span>
-        <div className="min-w-0">
+        <span className="text-xl sm:text-2xl leading-none shrink-0">{match.homeNationFlag}</span>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground uppercase tracking-wide truncate">
             {match.homeNationCode} <span className="text-muted-foreground font-normal">vs</span> {match.awayNationCode}
           </p>
           <p className="text-[10px] text-muted-foreground">{match.stage ?? "Group Stage"} · {dateStr}</p>
         </div>
-        <span className="text-2xl leading-none shrink-0">{match.awayNationFlag}</span>
+        <span className="text-xl sm:text-2xl leading-none shrink-0">{match.awayNationFlag}</span>
       </div>
 
-      <div className={`shrink-0 px-2 py-1 rounded-lg border text-[10px] font-heading font-bold uppercase tracking-wide ${OUTCOME_COLORS[entry.predictedOutcome]}`}>
-        {OUTCOME_LABELS[entry.predictedOutcome]}
-        {entry.predictedHomeScore != null && entry.predictedAwayScore != null && (
-          <span className="font-mono ml-1 opacity-70">({entry.predictedHomeScore}–{entry.predictedAwayScore})</span>
+      {/* Row 2 on mobile (inline on sm+): badges */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className={`px-2 py-1 rounded-lg border text-[10px] font-heading font-bold uppercase tracking-wide ${OUTCOME_COLORS[entry.predictedOutcome]}`}>
+          {OUTCOME_LABELS[entry.predictedOutcome]}
+          {entry.predictedHomeScore != null && entry.predictedAwayScore != null && (
+            <span className="font-mono ml-1 opacity-70">({entry.predictedHomeScore}–{entry.predictedAwayScore})</span>
+          )}
+        </div>
+
+        {match.status === "completed" && (
+          <div className="text-xs font-mono text-muted-foreground">
+            {match.homeScore}–{match.awayScore}
+          </div>
+        )}
+
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold ${statusBadge.cls}`}>
+          {statusBadge.icon}
+          {statusBadge.label}
+        </div>
+
+        {entry.xpEarned > 0 && (
+          <div className="flex items-center gap-0.5 text-primary text-[10px] font-bold">
+            <Zap className="h-3 w-3" />+{entry.xpEarned}
+          </div>
         )}
       </div>
-
-      {match.status === "completed" && (
-        <div className="text-xs font-mono text-muted-foreground shrink-0">
-          {match.homeScore}–{match.awayScore}
-        </div>
-      )}
-
-      <div className={`flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg border text-[10px] font-bold ${statusBadge.cls}`}>
-        {statusBadge.icon}
-        {statusBadge.label}
-      </div>
-
-      {entry.xpEarned > 0 && (
-        <div className="flex items-center gap-0.5 text-primary text-[10px] font-bold shrink-0">
-          <Zap className="h-3 w-3" />+{entry.xpEarned}
-        </div>
-      )}
     </div>
   );
 }
@@ -577,8 +581,8 @@ export default function Profile() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <header>
-        <h1 className="text-4xl font-heading font-bold uppercase text-foreground">My Identity</h1>
-        <p className="text-muted-foreground mt-1">Your fan profile and reputation standing.</p>
+        <h1 className="text-2xl sm:text-4xl font-heading font-bold uppercase text-foreground">My Identity</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Your fan profile and reputation standing.</p>
       </header>
 
       {/* Identity Card */}

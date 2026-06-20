@@ -28,26 +28,26 @@ export default function Matches() {
                   </span>
                 </div>
                 
-                <div className="p-6 flex-1 flex flex-col justify-center">
+                <div className="p-4 md:p-6 flex-1 flex flex-col justify-center">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3 w-2/5">
-                      <span className="text-4xl">{match.homeNationFlag}</span>
-                      <span className="font-heading text-lg font-bold truncate">{match.homeNationName}</span>
+                    <div className="flex items-center gap-2 w-2/5 min-w-0">
+                      <span className="text-2xl sm:text-4xl shrink-0">{match.homeNationFlag}</span>
+                      <span className="font-heading text-sm sm:text-lg font-bold truncate">{match.homeNationName}</span>
                     </div>
                     
-                    <div className="w-1/5 flex justify-center">
+                    <div className="w-1/5 flex justify-center shrink-0">
                       {match.status === 'upcoming' ? (
-                        <div className="px-3 py-1 bg-muted rounded font-mono text-sm font-bold text-muted-foreground">VS</div>
+                        <div className="px-2 sm:px-3 py-1 bg-muted rounded font-mono text-xs sm:text-sm font-bold text-muted-foreground">VS</div>
                       ) : (
-                        <div className="px-4 py-2 bg-primary/10 rounded font-heading text-2xl font-bold text-primary border border-primary/20">
+                        <div className="px-2 sm:px-4 py-1.5 sm:py-2 bg-primary/10 rounded font-heading text-lg sm:text-2xl font-bold text-primary border border-primary/20 whitespace-nowrap">
                           {match.homeScore} - {match.awayScore}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 w-2/5 text-right">
-                      <span className="font-heading text-lg font-bold truncate">{match.awayNationName}</span>
-                      <span className="text-4xl">{match.awayNationFlag}</span>
+                    <div className="flex items-center justify-end gap-2 w-2/5 min-w-0 text-right">
+                      <span className="font-heading text-sm sm:text-lg font-bold truncate">{match.awayNationName}</span>
+                      <span className="text-2xl sm:text-4xl shrink-0">{match.awayNationFlag}</span>
                     </div>
                   </div>
 
@@ -75,8 +75,8 @@ export default function Matches() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="mb-8">
-        <h1 className="text-4xl font-heading font-bold uppercase text-foreground">Match Center</h1>
-        <p className="text-muted-foreground mt-2">Live scores, upcoming fixtures, and fan confidence tracking.</p>
+        <h1 className="text-2xl sm:text-4xl font-heading font-bold uppercase text-foreground">Match Center</h1>
+        <p className="text-muted-foreground mt-2 text-sm sm:text-base">Live scores, upcoming fixtures, and fan confidence tracking.</p>
       </header>
 
       <Tabs defaultValue="upcoming" className="w-full">

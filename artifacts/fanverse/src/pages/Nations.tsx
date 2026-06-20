@@ -34,7 +34,7 @@ export default function Nations() {
         <div className="relative px-6 py-8">
           <div className="flex items-center gap-3 mb-1">
             <span className="text-3xl">🌍</span>
-            <h1 className="text-4xl font-heading font-bold uppercase text-foreground tracking-tight">Global Nations</h1>
+            <h1 className="text-2xl sm:text-4xl font-heading font-bold uppercase text-foreground tracking-tight">Global Nations</h1>
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
             Discover communities, track national confidence, and join your fanbase.

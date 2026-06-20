@@ -61,7 +61,7 @@ export default function NationDetail() {
                 <Shield className="w-3 h-3" /> {nation.confederation}
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-heading font-bold uppercase tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-4xl md:text-6xl font-heading font-bold uppercase tracking-tight text-foreground">
               {nation.name}
             </h1>
             <div className="flex items-center justify-center md:justify-start gap-4 mt-3">
