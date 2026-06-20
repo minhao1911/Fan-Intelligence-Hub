@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, Activity, CalendarDays, Globe, Trophy, User, LogOut,
   Star, ListOrdered, UsersRound, Target, Bell, MessageSquare,
-  Search, ChevronDown
+  Search, ChevronDown, ShieldCheck
 } from "lucide-react";
 import { useClerk, useUser } from "@clerk/react";
 import { useGetMe, useListMatches } from "@workspace/api-client-react";
@@ -39,6 +39,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Leaderboard", href: "/leaderboard",  icon: Trophy },
     { name: "Groups",      href: "/groups",       icon: UsersRound },
     { name: "Profile",     href: "/profile",      icon: User },
+    { name: "Admin",       href: "/admin",        icon: ShieldCheck },
   ];
 
   const mobileNav = [
