@@ -24,3 +24,15 @@ id = "12XnHfvbVF9LVOfg4l9XT"
 uri = "file://attached_assets/players/neymar.png"
 type = "image"
 title = "neymar style player"
+
+[[generated]]
+id = "F03iXs280-lIeT0nehmWN"
+uri = "file://artifacts/fanverse-mobile/assets/images/icon.png"
+type = "image"
+title = "fanverse mobile app icon"
+
+[[generated]]
+id = "6az0wQ17FEkNXzjRUnGcZ"
+uri = "file://artifacts/fanverse-mobile/assets/images/splash-icon.png"
+type = "image"
+title = "fanverse mobile splash screen"

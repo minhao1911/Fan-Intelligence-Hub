@@ -1,0 +1,39 @@
+{
+  "name": "@workspace/fanverse-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --web --port 5173",
+    "build:web": "expo export --platform web",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/expo": "^3.5.2",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo/vector-icons": "^14.1.0",
+    "@tanstack/react-query": "^5.101.0",
+    "expo": "~56.0.12",
+    "expo-font": "~56.0.7",
+    "expo-haptics": "~56.0.3",
+    "expo-linking": "~56.0.14",
+    "expo-router": "~56.2.11",
+    "expo-secure-store": "~56.0.4",
+    "expo-splash-screen": "~56.0.10",
+    "expo-status-bar": "~56.0.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "~0.86.0",
+    "react-native-gesture-handler": "~3.0.2",
+    "react-native-reanimated": "~4.4.1",
+    "react-native-safe-area-context": "~5.8.0",
+    "react-native-screens": "~4.25.2",
+    "react-native-web": "~0.20.0",
+    "react-native-worklets": "^0.9.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "babel-preset-expo": "~56.0.15",
+    "typescript": "~5.9.0"
+  }
+}

@@ -1,2 +1,3 @@
 - [Clerk React Package Names](clerk-packages.md) — @clerk/react is correct client (v6); publishableKeyFromHost must come from @clerk/react/internal (NOT @clerk/shared/keys)
 - [Clerk auth in Replit dev](clerk-replit-auth.md) — Clerk cookies don't reach API in Replit dev (domain mismatch); use setAuthTokenGetter from @workspace/api-client-react to attach Bearer tokens globally
+- [Expo Mobile App Setup](expo-mobile-setup.md) — Expo SDK 56, port 5173, API field names, SPA output mode, no babel-reanimated plugin

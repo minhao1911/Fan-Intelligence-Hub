@@ -1,0 +1,43 @@
+const Colors = {
+  dark: {
+    background: '#080811',
+    foreground: '#fafafa',
+    card: '#0f1020',
+    cardBorder: '#1d1e30',
+    primary: '#ffd600',
+    primaryForeground: '#080811',
+    secondary: '#1d1e30',
+    secondaryForeground: '#fafafa',
+    muted: '#1d1e30',
+    mutedForeground: '#9fa3a8',
+    border: '#1d1e30',
+    destructive: '#f03030',
+    success: '#10b981',
+    accent: '#60a5fa',
+    live: '#ef4444',
+    tabBar: '#0a0a18',
+    radius: 8,
+  },
+  light: {
+    background: '#f0f2f8',
+    foreground: '#0d0e2b',
+    card: '#ffffff',
+    cardBorder: '#d8dde8',
+    primary: '#c49200',
+    primaryForeground: '#ffffff',
+    secondary: '#e8eaf0',
+    secondaryForeground: '#0d0e2b',
+    muted: '#e8eaf0',
+    mutedForeground: '#6b7280',
+    border: '#d8dde8',
+    destructive: '#ef4444',
+    success: '#10b981',
+    accent: '#3b82f6',
+    live: '#ef4444',
+    tabBar: '#ffffff',
+    radius: 8,
+  },
+};
+
+export default Colors;
+export type ColorScheme = typeof Colors.dark;
