@@ -181,6 +181,116 @@ function MatchTicker() {
   );
 }
 
+type NationRow = { code: string; name: string; flagEmoji: string; confederation: string; memberCount: number; confidenceScore: number };
+
+const CONF_COLORS: Record<string, string> = {
+  UEFA: "text-sky-400 bg-sky-400/10 border-sky-400/20",
+  CONMEBOL: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+  CONCACAF: "text-orange-400 bg-orange-400/10 border-orange-400/20",
+  CAF: "text-rose-400 bg-rose-400/10 border-rose-400/20",
+  AFC: "text-violet-400 bg-violet-400/10 border-violet-400/20",
+};
+
+function NationPulsePreview() {
+  const [nations, setNations] = useState<NationRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/nations")
+      .then((r) => r.json())
+      .then((data: NationRow[]) => {
+        const sorted = [...data]
+          .map((n) => ({ ...n, confidenceScore: n.confidenceScore ?? 0 }))
+          .sort((a, b) => b.confidenceScore - a.confidenceScore)
+          .slice(0, 5);
+        setNations(sorted);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className="px-4 sm:px-6 py-20 max-w-4xl mx-auto w-full">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="text-primary font-heading uppercase tracking-widest text-xs font-bold mb-2">Live Data</p>
+          <h2 className="text-2xl md:text-3xl font-heading font-black uppercase text-foreground">Nation Pulse</h2>
+          <p className="text-sm text-muted-foreground mt-1">Most confident fan bases right now</p>
+        </div>
+        <Link href="/sign-up">
+          <Button size="sm" variant="outline" className="text-xs font-heading uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10 hidden sm:flex">
+            Join a Nation <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </Link>
+      </div>
+
+      <div className="space-y-3">
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-2xl bg-card/60 border border-border animate-pulse" style={{ opacity: 1 - i * 0.15 }} />
+            ))
+          : nations.map((nation, i) => {
+              const confColor = CONF_COLORS[nation.confederation] ?? "text-slate-400 bg-slate-400/10 border-slate-400/20";
+              const barWidth = Math.max(4, Math.round(nation.confidenceScore));
+              const rank = i + 1;
+              const isTop = rank === 1;
+              return (
+                <div
+                  key={nation.code}
+                  className={`relative rounded-2xl border px-5 py-4 flex items-center gap-4 overflow-hidden transition-all hover:border-primary/30 hover:bg-primary/3 ${
+                    isTop ? "border-primary/30 bg-primary/5" : "border-border bg-card/60"
+                  }`}
+                >
+                  {isTop && (
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+                  )}
+                  {/* Rank */}
+                  <span className={`font-mono font-black text-sm w-5 shrink-0 ${isTop ? "text-primary" : "text-muted-foreground/40"}`}>
+                    #{rank}
+                  </span>
+                  {/* Flag */}
+                  <span className="text-3xl leading-none select-none shrink-0">{nation.flagEmoji}</span>
+                  {/* Name + conf */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="font-heading font-black uppercase text-sm text-foreground truncate">{nation.name}</span>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border shrink-0 ${confColor}`}>
+                        {nation.confederation}
+                      </span>
+                    </div>
+                    {/* Confidence bar */}
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex-1 h-1.5 rounded-full bg-border/60 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${isTop ? "bg-primary" : "bg-primary/50"}`}
+                          style={{ width: `${barWidth}%`, transition: "width 0.8s ease" }}
+                        />
+                      </div>
+                      <span className={`text-xs font-heading font-black tabular-nums shrink-0 ${isTop ? "text-primary" : "text-muted-foreground"}`}>
+                        {nation.confidenceScore.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  {/* Members */}
+                  <div className="text-right shrink-0 hidden sm:block">
+                    <div className="text-sm font-heading font-black text-foreground">{nation.memberCount.toLocaleString()}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">fans</div>
+                  </div>
+                </div>
+              );
+            })}
+      </div>
+
+      <div className="mt-6 text-center">
+        <Link href="/sign-up">
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary font-heading uppercase tracking-widest">
+            See all nations <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   const { data: stats, isLoading } = useGetGlobalStats();
 
@@ -350,6 +460,9 @@ export default function Landing() {
             ))}
           </div>
         </section>
+
+        {/* Nation Pulse Preview */}
+        <NationPulsePreview />
 
         {/* How it works */}
         <section className="bg-card/40 border-t border-b border-border/50 px-4 sm:px-6 py-20">
