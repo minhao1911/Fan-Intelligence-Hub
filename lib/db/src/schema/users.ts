@@ -12,6 +12,7 @@ export const usersTable = pgTable("users", {
   totalVotes: integer("total_votes").notNull().default(0),
   totalReactions: integer("total_reactions").notNull().default(0),
   totalDiscussions: integer("total_discussions").notNull().default(0),
+  totalPredictions: integer("total_predictions").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

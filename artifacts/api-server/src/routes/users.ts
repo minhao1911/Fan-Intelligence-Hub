@@ -31,6 +31,7 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     totalVotes: user.totalVotes,
     totalReactions: user.totalReactions,
     totalDiscussions: user.totalDiscussions,
+    totalPredictions: user.totalPredictions,
     createdAt: user.createdAt.toISOString(),
   });
 });

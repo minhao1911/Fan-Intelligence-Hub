@@ -24,6 +24,7 @@ export interface UserProfile {
   totalVotes: number;
   totalReactions: number;
   totalDiscussions: number;
+  totalPredictions: number;
   createdAt: string;
 }
 

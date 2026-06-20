@@ -568,6 +568,7 @@ export default function Profile() {
   }
 
   const pointsByActivity = [
+    { label: "Predictions", value: user.totalPredictions * 5, count: user.totalPredictions, icon: <Target className="h-4 w-4 text-primary" /> },
     { label: "Poll Votes", value: user.totalVotes * 5, count: user.totalVotes, icon: <Vote className="h-4 w-4 text-primary" /> },
     { label: "Reactions", value: user.totalReactions * 3, count: user.totalReactions, icon: <ThumbsUp className="h-4 w-4 text-primary" /> },
     { label: "Discussions", value: user.totalDiscussions * 8, count: user.totalDiscussions, icon: <MessageSquare className="h-4 w-4 text-primary" /> },
@@ -623,8 +624,9 @@ export default function Profile() {
       </Card>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard title="Reputation" value={user.reputationPoints.toLocaleString()} sub="total pts" icon={<Star className="text-primary h-5 w-5" />} highlight />
+        <StatCard title="Predictions" value={user.totalPredictions.toLocaleString()} sub="+5 pts each" icon={<Target className="text-primary h-5 w-5" />} />
         <StatCard title="Poll Votes" value={user.totalVotes.toLocaleString()} sub="+5 pts each" icon={<Vote className="text-primary h-5 w-5" />} />
         <StatCard title="Reactions" value={user.totalReactions.toLocaleString()} sub="+3 pts each" icon={<ThumbsUp className="text-primary h-5 w-5" />} />
         <StatCard title="Discussions" value={user.totalDiscussions.toLocaleString()} sub="+8 pts each" icon={<MessageSquare className="text-primary h-5 w-5" />} />

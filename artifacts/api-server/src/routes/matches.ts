@@ -444,10 +444,13 @@ router.post("/matches/:matchId/predict", requireAuth, async (req, res): Promise<
         xpEarned: 5,
       })
       .returning();
-    // Award +5 XP for first prediction on this match
+    // Award +5 XP and increment totalPredictions for first prediction on this match
     await db
       .update(usersTable)
-      .set({ reputationPoints: sql`${usersTable.reputationPoints} + 5` })
+      .set({
+        reputationPoints: sql`${usersTable.reputationPoints} + 5`,
+        totalPredictions: sql`${usersTable.totalPredictions} + 1`,
+      })
       .where(eq(usersTable.id, user.id));
   }
 
