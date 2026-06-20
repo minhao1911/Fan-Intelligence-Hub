@@ -2,8 +2,9 @@ import { Link, useLocation } from "wouter";
 import {
   Home, Activity, CalendarDays, Globe, Trophy, User, LogOut,
   Star, ListOrdered, UsersRound, Target, Bell, MessageSquare,
-  Search, ChevronDown, ShieldCheck
+  Search, ChevronDown, ShieldCheck, Sun, Moon
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useClerk, useUser } from "@clerk/react";
 import { useGetMe, useListMatches } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { useMatchNotifications } from "@/hooks/useMatchNotifications";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useMatchNotifications();
   const [location] = useLocation();
+  const { theme, toggle: toggleTheme } = useTheme();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
   const { data: user } = useGetMe();
@@ -121,6 +123,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               className="w-44 xl:w-52 bg-muted border border-border rounded-full pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
             />
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
 
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground relative" asChild>
             <Link href="/pulse">

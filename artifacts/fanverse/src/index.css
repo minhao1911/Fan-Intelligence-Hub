@@ -69,52 +69,52 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* LIGHT MODE - Enforce dark mode as default but keep variables valid */
+/* ── LIGHT MODE (default) ─────────────────────────────────────────────── */
 :root {
-  --background: 240 33% 5%;
-  --foreground: 0 0% 98%;
+  --background: 220 25% 96%;
+  --foreground: 240 30% 12%;
 
-  --card: 240 23% 8%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 240 20% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 30% 12%;
+  --card-border: 220 16% 87%;
 
-  --popover: 240 23% 8%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 240 20% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 30% 12%;
+  --popover-border: 220 16% 87%;
 
-  --primary: 51 100% 50%;
+  --primary: 45 96% 40%;
   --primary-foreground: 240 33% 5%;
 
-  --secondary: 240 20% 15%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 220 16% 91%;
+  --secondary-foreground: 240 30% 12%;
 
-  --muted: 240 20% 15%;
-  --muted-foreground: 240 5% 65%;
+  --muted: 220 16% 91%;
+  --muted-foreground: 240 8% 44%;
 
-  --accent: 240 20% 15%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 220 16% 91%;
+  --accent-foreground: 240 30% 12%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 55%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 20% 15%;
-  --input: 240 20% 15%;
-  --ring: 51 100% 50%;
+  --border: 220 16% 87%;
+  --input: 220 16% 87%;
+  --ring: 45 96% 40%;
 
-  --chart-1: 51 100% 50%;
-  --chart-2: 160 84% 39%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-1: 45 96% 40%;
+  --chart-2: 160 60% 32%;
+  --chart-3: 30 80% 48%;
+  --chart-4: 280 55% 52%;
+  --chart-5: 340 65% 48%;
 
-  --sidebar: 240 23% 8%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 240 20% 15%;
-  --sidebar-primary: 51 100% 50%;
+  --sidebar: 220 20% 93%;
+  --sidebar-foreground: 240 30% 12%;
+  --sidebar-border: 220 16% 87%;
+  --sidebar-primary: 45 96% 40%;
   --sidebar-primary-foreground: 240 33% 5%;
-  --sidebar-accent: 240 20% 15%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 51 100% 50%;
+  --sidebar-accent: 220 16% 91%;
+  --sidebar-accent-foreground: 240 30% 12%;
+  --sidebar-ring: 45 96% 40%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-heading: 'Oswald', sans-serif;
