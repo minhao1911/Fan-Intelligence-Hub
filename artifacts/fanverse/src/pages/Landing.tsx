@@ -224,8 +224,8 @@ export default function Landing() {
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
 
             {/* LEFT: Messi */}
-            <div className="absolute bottom-0 left-[-2%] lg:left-[3%] flex flex-col items-center opacity-0 lg:opacity-100" style={{animation:"player-sway 7s ease-in-out infinite", transformOrigin:"bottom center"}}>
-              <div className="relative h-[360px] xl:h-[420px]">
+            <div className="absolute bottom-0 left-0 sm:left-[1%] lg:left-[3%] flex flex-col items-center" style={{animation:"player-sway 7s ease-in-out infinite", transformOrigin:"bottom center"}}>
+              <div className="relative h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px] xl:h-[420px]">
                 <img src={messiImg} alt="Messi" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 24px rgba(250,204,21,0.25)) drop-shadow(0 0 8px rgba(250,204,21,0.15))"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
               </div>
@@ -233,26 +233,26 @@ export default function Landing() {
             </div>
 
             {/* RIGHT: Ronaldo */}
-            <div className="absolute bottom-0 right-[-2%] lg:right-[3%] flex flex-col items-center opacity-0 lg:opacity-100" style={{animation:"player-float 8s ease-in-out 1.5s infinite", transformOrigin:"bottom center"}}>
-              <div className="relative h-[360px] xl:h-[420px]">
+            <div className="absolute bottom-0 right-0 sm:right-[1%] lg:right-[3%] flex flex-col items-center" style={{animation:"player-float 8s ease-in-out 1.5s infinite", transformOrigin:"bottom center"}}>
+              <div className="relative h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px] xl:h-[420px]">
                 <img src={ronaldoImg} alt="Ronaldo" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 24px rgba(250,204,21,0.25)) drop-shadow(0 0 8px rgba(250,204,21,0.15))"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
               </div>
               <span className="font-heading font-black uppercase tracking-[0.3em] text-[10px] text-primary/50 mt-1">Ronaldo</span>
             </div>
 
-            {/* FAR LEFT (xl only): Mbappé */}
-            <div className="absolute bottom-0 left-[-6%] xl:left-[-2%] flex flex-col items-center opacity-0 xl:opacity-70" style={{animation:"player-breathe 6s ease-in-out 0.8s infinite", transformOrigin:"bottom center"}}>
-              <div className="relative h-[280px] xl:h-[340px]">
+            {/* FAR LEFT: Mbappé — visible from lg up */}
+            <div className="absolute bottom-0 left-[-8%] lg:left-[-4%] xl:left-[-1%] flex flex-col items-center opacity-0 lg:opacity-60 xl:opacity-70" style={{animation:"player-breathe 6s ease-in-out 0.8s infinite", transformOrigin:"bottom center"}}>
+              <div className="relative h-[260px] xl:h-[320px]">
                 <img src={mbappeImg} alt="Mbappé" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 16px rgba(250,204,21,0.2)) saturate(0.85) brightness(0.8)"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background via-background/60 to-transparent" />
               </div>
               <span className="font-heading font-black uppercase tracking-[0.3em] text-[9px] text-primary/30 mt-1">Mbappé</span>
             </div>
 
-            {/* FAR RIGHT (xl only): Neymar */}
-            <div className="absolute bottom-0 right-[-6%] xl:right-[-2%] flex flex-col items-center opacity-0 xl:opacity-70" style={{animation:"player-sway 9s ease-in-out 2.2s infinite", transformOrigin:"bottom center"}}>
-              <div className="relative h-[280px] xl:h-[340px]">
+            {/* FAR RIGHT: Neymar — visible from lg up */}
+            <div className="absolute bottom-0 right-[-8%] lg:right-[-4%] xl:right-[-1%] flex flex-col items-center opacity-0 lg:opacity-60 xl:opacity-70" style={{animation:"player-sway 9s ease-in-out 2.2s infinite", transformOrigin:"bottom center"}}>
+              <div className="relative h-[260px] xl:h-[320px]">
                 <img src={neymarImg} alt="Neymar" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 16px rgba(250,204,21,0.2)) saturate(0.85) brightness(0.8)"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background via-background/60 to-transparent" />
               </div>
