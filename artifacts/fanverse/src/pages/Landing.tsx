@@ -334,7 +334,7 @@ export default function Landing() {
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
 
             {/* LEFT: Messi */}
-            <div className="absolute bottom-0 left-0 sm:left-[1%] lg:left-[3%] flex flex-col items-center" style={{animation:"player-sway 7s ease-in-out infinite", transformOrigin:"bottom center"}}>
+            <div className="absolute bottom-0 left-0 sm:left-[1%] lg:left-[3%] flex flex-col items-center">
               <div className="relative h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px] xl:h-[420px]">
                 <img src={messiImg} alt="Messi" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 24px rgba(250,204,21,0.25)) drop-shadow(0 0 8px rgba(250,204,21,0.15))"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -343,7 +343,7 @@ export default function Landing() {
             </div>
 
             {/* RIGHT: Ronaldo */}
-            <div className="absolute bottom-0 right-0 sm:right-[1%] lg:right-[3%] flex flex-col items-center" style={{animation:"player-float 8s ease-in-out 1.5s infinite", transformOrigin:"bottom center"}}>
+            <div className="absolute bottom-0 right-0 sm:right-[1%] lg:right-[3%] flex flex-col items-center">
               <div className="relative h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px] xl:h-[420px]">
                 <img src={ronaldoImg} alt="Ronaldo" className="h-full w-auto object-contain object-bottom" style={{filter:"drop-shadow(0 0 24px rgba(250,204,21,0.25)) drop-shadow(0 0 8px rgba(250,204,21,0.15))"}} />
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/60 to-transparent" />
