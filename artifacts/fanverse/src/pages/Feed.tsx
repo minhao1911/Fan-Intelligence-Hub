@@ -23,6 +23,7 @@ import HotTakeStrip from "@/components/HotTakeStrip";
 import NationRivalryCard from "@/components/NationRivalryCard";
 import BracketProgressWidget from "@/components/BracketProgressWidget";
 import FanLiveChat from "@/components/FanLiveChat";
+import LiveMatchTicker from "@/components/LiveMatchTicker";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -203,6 +204,9 @@ export default function Feed() {
 
         {/* ══════════ CENTER FEED ══════════ */}
         <main className="flex flex-col gap-5 min-w-0">
+
+          {/* Live Match Ticker — sticky strip, only visible when matches are live */}
+          <LiveMatchTicker />
 
           {/* Match Day Countdown — only shows when a match is within 2 hours or live */}
           <MatchDayCountdown />
