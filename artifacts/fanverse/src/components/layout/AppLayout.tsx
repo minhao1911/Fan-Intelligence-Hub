@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Home, Activity, CalendarDays, Globe, Trophy, User, LogOut,
@@ -15,12 +16,14 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LiveScoreTicker from "@/components/LiveScoreTicker";
+import MobileSearchModal from "@/components/MobileSearchModal";
 import { Toaster } from "@/components/ui/sonner";
 import { useMatchNotifications } from "@/hooks/useMatchNotifications";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useMatchNotifications();
   const [location] = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
   const { theme, toggle: toggleTheme } = useTheme();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
@@ -44,12 +47,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Admin",       href: "/admin",        icon: ShieldCheck },
   ];
 
-  const mobileNav = [
-    { name: "Home",        href: "/feed",        icon: Home },
-    { name: "Nations",     href: "/nations",      icon: Globe },
-    { name: "Matches",     href: "/matches",      icon: CalendarDays },
-    { name: "Predictions", href: "/predictions",  icon: Target },
-    { name: "Profile",     href: "/profile",      icon: User },
+  const mobileNavLeft = [
+    { name: "Home",    href: "/feed",    icon: Home },
+    { name: "Nations", href: "/nations", icon: Globe },
+  ];
+  const mobileNavRight = [
+    { name: "Matches",     href: "/matches",     icon: CalendarDays },
+    { name: "Predictions", href: "/predictions", icon: Target },
+    { name: "Profile",     href: "/profile",     icon: User },
   ];
 
   const primaryNav = navigation.slice(0, 7);
@@ -216,7 +221,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* ── Mobile bottom navigation ────────────────────────────── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/60 flex items-stretch h-16">
-        {mobileNav.map((item) => {
+        {/* Left two: Home + Nations */}
+        {mobileNavLeft.map((item) => {
+          const isActive = location.startsWith(item.href);
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
+              {item.name}
+            </Link>
+          );
+        })}
+
+        {/* Centre Search FAB */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+        >
+          <div className="w-10 h-10 -mt-4 rounded-full bg-primary flex items-center justify-center shadow-[0_0_18px_rgba(251,191,36,0.4)] border-[3px] border-card">
+            <Search className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span>Search</span>
+        </button>
+
+        {/* Right three: Matches + Predictions + Profile */}
+        {mobileNavRight.map((item) => {
           const isActive = location.startsWith(item.href);
           return (
             <Link
@@ -232,6 +266,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           );
         })}
       </nav>
+
+      {/* Mobile search modal */}
+      <MobileSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }
