@@ -57,13 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Logo */}
         <Link href="/feed" className="flex items-center gap-2 shrink-0 mr-2">
-          <div className="relative w-8 h-8">
-            <svg viewBox="0 0 400 400" className="w-8 h-8 text-primary">
-              <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" strokeWidth="24" opacity="0.9"/>
-              <path d="M200 60 L200 340 M60 200 L340 200 M100 100 L300 300 M100 300 L300 100" stroke="currentColor" strokeWidth="12" opacity="0.45"/>
-            </svg>
-            <div className="absolute inset-0 rounded-full bg-primary/10 blur-md -z-10" />
-          </div>
+          <img src="/fanverse-logo.png" alt="FanVerse" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-heading text-lg font-bold text-foreground uppercase tracking-wide hidden sm:block">
             Fan<span className="text-primary">Verse</span>
           </span>

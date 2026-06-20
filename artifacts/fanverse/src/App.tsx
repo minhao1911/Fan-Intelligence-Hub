@@ -55,6 +55,7 @@ const clerkAppearance = {
     fontFamily: "'Inter', sans-serif",
     borderRadius: "0.5rem",
   },
+  logoImageUrl: "/fanverse-logo.png",
   elements: {
     rootBox: "w-full flex justify-center",
     cardBox: "bg-card rounded-2xl w-[440px] max-w-full overflow-hidden border border-border shadow-xl",

@@ -379,6 +379,11 @@ export default function Landing() {
           </div>
 
           <div className="relative z-10 max-w-4xl mx-auto">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <img src="/fanverse-logo.png" alt="FanVerse" className="w-24 h-24 rounded-2xl object-cover shadow-[0_0_40px_rgba(0,200,255,0.25)]" />
+            </div>
+
             {/* Live badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/8 text-primary text-xs font-bold uppercase tracking-widest mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
