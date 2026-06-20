@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "EydU6BwH0DsGdH-hlAN32"
+uri = "file://attached_assets/players/messi.png"
+type = "image"
+title = "messi style player"
+
+[[generated]]
+id = "ddSBINUfFtmpCPApP76mz"
+uri = "file://attached_assets/players/ronaldo.png"
+type = "image"
+title = "ronaldo style player"
+
+[[generated]]
+id = "bX0OolsaYECcBbvpyVJHo"
+uri = "file://attached_assets/players/mbappe.png"
+type = "image"
+title = "mbappe style player"
+
+[[generated]]
+id = "12XnHfvbVF9LVOfg4l9XT"
+uri = "file://attached_assets/players/neymar.png"
+type = "image"
+title = "neymar style player"
