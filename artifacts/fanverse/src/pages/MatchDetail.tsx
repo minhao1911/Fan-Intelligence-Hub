@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
+import { useAuth } from "@clerk/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useGetMatch,
   useListMatchPolls,
@@ -10,10 +12,28 @@ import {
   useCastPollVote,
   useSubmitReaction,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, MessageSquare, Activity, Shield, CheckCircle2 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
+import {
+  ArrowLeft, Clock, MessageSquare, Activity, Shield, CheckCircle2,
+  Target, TrendingUp, Zap, BarChart2, ChevronRight,
+} from "lucide-react";
+
+type Outcome = "home" | "draw" | "away";
+
+const OUTCOME_LABELS: Record<Outcome, string> = { home: "Home Win", draw: "Draw", away: "Away Win" };
+const OUTCOME_COLORS: Record<Outcome, string> = {
+  home: "border-primary/60 bg-primary/10 text-primary",
+  draw: "border-blue-500/60 bg-blue-500/10 text-blue-400",
+  away: "border-purple-500/60 bg-purple-500/10 text-purple-400",
+};
+const OUTCOME_BAR: Record<Outcome, string> = {
+  home: "bg-gradient-to-r from-primary/80 to-primary",
+  draw: "bg-gradient-to-r from-blue-500/80 to-blue-500",
+  away: "bg-gradient-to-r from-purple-500/80 to-purple-500",
+};
+const OUTCOME_BTN_IDLE = "border-border hover:border-primary/40 hover:bg-muted/40";
 
 const REACTIONS = [
   { type: "ecstatic", emoji: "🤩", label: "Ecstatic" },
@@ -24,12 +44,255 @@ const REACTIONS = [
 ];
 
 const SENTIMENT_EMOJI: Record<string, string> = {
-  ecstatic: "🤩",
-  satisfied: "😊",
-  neutral: "😐",
-  disappointed: "😞",
-  devastated: "😢",
+  ecstatic: "🤩", satisfied: "😊", neutral: "😐", disappointed: "😞", devastated: "😢",
 };
+
+interface MyPrediction {
+  matchId: number;
+  predictedOutcome: Outcome;
+  predictedHomeScore: number | null;
+  predictedAwayScore: number | null;
+  xpEarned: number;
+}
+
+interface PredictionSummary {
+  matchId: number;
+  total: number;
+  homePct: number;
+  drawPct: number;
+  awayPct: number;
+}
+
+function useMyPrediction(matchId: number) {
+  const { getToken } = useAuth();
+  return useQuery<MyPrediction | null>({
+    queryKey: ["my-prediction", matchId],
+    queryFn: async () => {
+      const token = await getToken();
+      const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/my-prediction`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+    staleTime: 30_000,
+  });
+}
+
+function usePredictionSummary(matchId: number) {
+  return useQuery<PredictionSummary>({
+    queryKey: ["prediction-summary", matchId],
+    queryFn: async () => {
+      const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/predictions/summary`);
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+  });
+}
+
+function useSubmitPrediction(matchId: number) {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { predictedOutcome: Outcome; predictedHomeScore?: number; predictedAwayScore?: number }) => {
+      const token = await getToken();
+      const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-prediction", matchId] });
+      qc.invalidateQueries({ queryKey: ["prediction-summary", matchId] });
+    },
+  });
+}
+
+function ScorePredictionCard({
+  matchId,
+  homeNationCode,
+  awayNationCode,
+  homeNationName,
+  awayNationName,
+  matchStatus,
+}: {
+  matchId: number;
+  homeNationCode: string;
+  awayNationCode: string;
+  homeNationName: string;
+  awayNationName: string;
+  matchStatus: string;
+}) {
+  const { isSignedIn } = useAuth();
+  const { data: myPrediction, isLoading: loadingMine } = useMyPrediction(matchId);
+  const { data: summary } = usePredictionSummary(matchId);
+  const submit = useSubmitPrediction(matchId);
+
+  const [selected, setSelected] = useState<Outcome | null>(null);
+  const [homeScore, setHomeScore] = useState("");
+  const [awayScore, setAwayScore] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const hasPredicted = !!myPrediction || submitted;
+  const displayOutcome: Outcome | null = myPrediction?.predictedOutcome ?? selected ?? null;
+  const canSubmit = !!(selected) && !submit.isPending;
+
+  const handleSubmit = () => {
+    if (!selected) return;
+    const hs = parseInt(homeScore, 10);
+    const as_ = parseInt(awayScore, 10);
+    submit.mutate(
+      {
+        predictedOutcome: selected,
+        predictedHomeScore: !isNaN(hs) && hs >= 0 ? hs : undefined,
+        predictedAwayScore: !isNaN(as_) && as_ >= 0 ? as_ : undefined,
+      },
+      { onSuccess: () => setSubmitted(true) },
+    );
+  };
+
+  return (
+    <Card className="bg-card border-border overflow-hidden">
+      <CardHeader className="bg-muted/20 border-b border-border/50 pb-4">
+        <CardTitle className="font-heading text-base flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" /> Score Prediction
+        </CardTitle>
+        <div className="text-xs text-muted-foreground uppercase tracking-widest">
+          {summary?.total ?? 0} fan prediction{(summary?.total ?? 0) !== 1 ? "s" : ""} · +5 pts
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-5 space-y-4">
+        {!isSignedIn ? (
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-muted-foreground">Sign in to submit your score prediction</p>
+            <Button size="sm" variant="outline" className="font-heading uppercase tracking-widest text-xs" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+          </div>
+        ) : loadingMine ? (
+          <div className="h-24 bg-muted/40 rounded-xl animate-pulse" />
+        ) : hasPredicted ? (
+          <div className="space-y-2">
+            <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border font-heading font-bold uppercase tracking-wide text-xs ${displayOutcome ? OUTCOME_COLORS[displayOutcome] : ""}`}>
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{displayOutcome ? OUTCOME_LABELS[displayOutcome] : ""}</span>
+              {myPrediction?.predictedHomeScore != null && myPrediction?.predictedAwayScore != null && (
+                <span className="ml-auto font-mono text-[11px] opacity-70">
+                  {myPrediction.predictedHomeScore}–{myPrediction.predictedAwayScore}
+                </span>
+              )}
+              {myPrediction?.xpEarned ? (
+                <span className="ml-auto flex items-center gap-1 text-primary text-xs">
+                  <Zap className="h-3 w-3" />+{myPrediction.xpEarned} XP
+                </span>
+              ) : null}
+            </div>
+          </div>
+        ) : matchStatus !== "upcoming" ? (
+          <p className="text-xs text-muted-foreground text-center py-3">Predictions closed — match has started</p>
+        ) : (
+          <div className="space-y-4">
+            {/* Outcome picker */}
+            <div className="grid grid-cols-3 gap-2">
+              {(["home", "draw", "away"] as Outcome[]).map((o) => (
+                <button
+                  key={o}
+                  onClick={() => setSelected(o)}
+                  className={`py-2.5 px-1 rounded-lg border text-center text-[10px] font-heading font-bold uppercase tracking-widest transition-all ${
+                    selected === o ? OUTCOME_COLORS[o] : OUTCOME_BTN_IDLE
+                  }`}
+                >
+                  <div className="text-base mb-1">
+                    {o === "home" ? "🏠" : o === "draw" ? "🤝" : "✈️"}
+                  </div>
+                  {o === "home" ? homeNationCode : o === "away" ? awayNationCode : "Draw"}
+                </button>
+              ))}
+            </div>
+
+            {/* Score inputs */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Exact score <span className="normal-case font-normal">(optional · bonus XP)</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">{homeNationName}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={homeScore}
+                    onChange={(e) => setHomeScore(e.target.value)}
+                    placeholder="0"
+                    className="w-full h-10 text-center text-lg font-mono font-bold bg-muted/40 border border-border rounded-lg focus:outline-none focus:border-primary/60 focus:bg-muted/60 transition-colors"
+                  />
+                </div>
+                <span className="text-muted-foreground font-bold text-lg pt-4">–</span>
+                <div className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">{awayNationName}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={awayScore}
+                    onChange={(e) => setAwayScore(e.target.value)}
+                    placeholder="0"
+                    className="w-full h-10 text-center text-lg font-mono font-bold bg-muted/40 border border-border rounded-lg focus:outline-none focus:border-primary/60 focus:bg-muted/60 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="w-full font-heading uppercase tracking-widest h-10 text-xs"
+            >
+              {submit.isPending ? "Submitting…" : "Lock In Prediction"}
+            </Button>
+          </div>
+        )}
+
+        {/* Community distribution */}
+        {summary && summary.total > 0 && (
+          <div className="pt-3 border-t border-border/50 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+              <TrendingUp className="h-3 w-3" /> Community Split
+            </p>
+            {(["home", "draw", "away"] as Outcome[]).map((o) => {
+              const pct = o === "home" ? summary.homePct : o === "draw" ? summary.drawPct : summary.awayPct;
+              return (
+                <div key={o} className="flex items-center gap-2 text-xs">
+                  <span className="w-10 text-muted-foreground text-[10px] font-bold uppercase tracking-wide truncate">
+                    {o === "home" ? homeNationCode : o === "away" ? awayNationCode : "Draw"}
+                  </span>
+                  <div className="flex-1 h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 ${OUTCOME_BAR[o]}`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="font-mono font-bold text-[11px] w-7 text-right tabular-nums">{pct}%</span>
+                </div>
+              );
+            })}
+            <Link
+              href={`/match-stats/${matchId}`}
+              className="flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary font-bold uppercase tracking-widest pt-1 transition-colors"
+            >
+              <BarChart2 className="h-3 w-3" /> Full prediction stats <ChevronRight className="h-3 w-3 ml-auto" />
+            </Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function MatchDetail() {
   const { id } = useParams();
@@ -195,13 +458,26 @@ export default function MatchDetail() {
           </Button>
         </div>
 
-        {/* Right: Sentiment */}
+        {/* Right: Prediction + Sentiment */}
         <div className="space-y-6">
+          {/* Score Prediction */}
+          <h3 className="text-xl font-heading font-bold uppercase flex items-center gap-2 border-b border-border/50 pb-2">
+            <Target className="w-5 h-5 text-primary" /> Predict
+          </h3>
+          <ScorePredictionCard
+            matchId={matchId}
+            homeNationCode={match.homeNationCode}
+            awayNationCode={match.awayNationCode}
+            homeNationName={match.homeNationName}
+            awayNationName={match.awayNationName}
+            matchStatus={match.status}
+          />
+
+          {/* Fan Mood */}
           <h3 className="text-xl font-heading font-bold uppercase flex items-center gap-2 border-b border-border/50 pb-2">
             Fan Mood
           </h3>
 
-          {/* Reaction Buttons */}
           <Card className="bg-card border-border">
             <CardContent className="p-5 space-y-4">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -232,7 +508,6 @@ export default function MatchDetail() {
             </CardContent>
           </Card>
 
-          {/* Sentiment Summary */}
           {reactionSummary && reactionSummary.total > 0 && (
             <Card className="bg-card border-border">
               <CardContent className="p-5 space-y-4">
@@ -251,7 +526,6 @@ export default function MatchDetail() {
                   </div>
                 </div>
 
-                {/* Reaction Breakdown */}
                 <div className="space-y-2 pt-2 border-t border-border/50">
                   {REACTIONS.map((r) => {
                     const count = (reactionSummary as any)[r.type] ?? 0;
