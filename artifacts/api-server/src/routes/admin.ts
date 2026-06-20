@@ -4,9 +4,14 @@ import {
   db,
   matchesTable,
   matchPredictionsTable,
+  pollsTable,
+  pollOptionsTable,
+  pollVotesTable,
+  reactionsTable,
   usersTable,
   nationsTable,
 } from "@workspace/db";
+import { nations, generateMatchRows } from "@workspace/db/seed-data";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
@@ -32,12 +37,12 @@ router.get("/admin/matches", requireAuth, async (req, res): Promise<void> => {
     ...matches.map((m) => m.awayNationCode),
   ])];
 
-  const nations = await db
+  const nationRows = await db
     .select({ code: nationsTable.code, name: nationsTable.name, flag: nationsTable.flagEmoji })
     .from(nationsTable)
     .where(inArray(nationsTable.code, allCodes));
 
-  const nationMap = new Map(nations.map((n) => [n.code, n]));
+  const nationMap = new Map(nationRows.map((n) => [n.code, n]));
 
   const result = matches.map((m) => ({
     id: m.id,
@@ -147,6 +152,33 @@ router.post("/admin/matches/:matchId/resolve", requireAuth, async (req, res): Pr
   }
 
   res.json({ matchId, homeScore, awayScore, actualOutcome, settledCount, correctCount, exactCount });
+});
+
+// ── Reseed database ───────────────────────────────────────────────────────────
+router.post("/admin/reseed", requireAuth, async (req, res): Promise<void> => {
+  // Delete all match-related data in dependency order
+  await db.delete(matchPredictionsTable);
+  await db.delete(reactionsTable);
+  await db.delete(pollVotesTable);
+  await db.delete(pollOptionsTable);
+  await db.delete(pollsTable);
+  await db.delete(matchesTable);
+
+  // Upsert nations
+  await db
+    .insert(nationsTable)
+    .values(nations)
+    .onConflictDoNothing();
+
+  // Insert fresh matches
+  const matchRows = generateMatchRows();
+  await db.insert(matchesTable).values(matchRows);
+
+  res.json({
+    ok: true,
+    nationsCount: nations.length,
+    matchesCount: matchRows.length,
+  });
 });
 
 export default router;

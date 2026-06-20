@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBaseUrl } from "@/lib/api";
 import {
   Shield, Zap, Clock, CheckCircle2, Radio, Trophy,
-  ChevronRight, AlertCircle, RefreshCw, Users,
+  ChevronRight, AlertCircle, RefreshCw, Users, Database, TriangleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -70,6 +70,29 @@ function useUpdateStatus() {
       return r.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-matches"] }),
+  });
+}
+
+function useReseed() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      const r = await fetch(`${getBaseUrl()}api/admin/reseed`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error ?? "Reseed failed");
+      }
+      return r.json() as Promise<{ ok: boolean; nationsCount: number; matchesCount: number }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-matches"] });
+      qc.invalidateQueries({ queryKey: ["predictions-upcoming-matches"] });
+    },
   });
 }
 
@@ -329,7 +352,9 @@ type Tab = "upcoming" | "live" | "completed";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [confirmReseed, setConfirmReseed] = useState(false);
   const { data: matches = [], isLoading, error, refetch } = useAdminMatches();
+  const reseed = useReseed();
 
   const upcomingMatches = matches.filter((m) => m.status === "upcoming");
   const liveMatches = matches.filter((m) => m.status === "live");
@@ -486,6 +511,77 @@ export default function Admin() {
           Click "Go Live" → switch to Live tab → enter final score → "Resolve & Award XP"
         </p>
       )}
+
+      {/* Reseed section */}
+      <div className="rounded-xl border border-border/50 bg-card/60 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-muted-foreground" />
+          <p className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">
+            Database
+          </p>
+        </div>
+
+        {reseed.isSuccess ? (
+          <div className="flex items-center gap-2 text-xs text-emerald-400">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            Reseeded — {reseed.data.nationsCount} nations &amp; {reseed.data.matchesCount} matches restored. All match predictions &amp; reactions cleared.
+          </div>
+        ) : confirmReseed ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 p-3">
+              <TriangleAlert className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-300 leading-relaxed">
+                This will <strong>delete all matches, predictions, and reactions</strong>, then restore the default 48 nations and 72 World Cup group stage matches. User accounts and reputation are kept.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs border-border/60 text-muted-foreground hover:text-foreground"
+                disabled={reseed.isPending}
+                onClick={() => setConfirmReseed(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 text-xs bg-amber-500 text-black hover:bg-amber-400 font-heading uppercase tracking-wide"
+                disabled={reseed.isPending}
+                onClick={() => reseed.mutate()}
+              >
+                {reseed.isPending ? (
+                  <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Database className="h-3 w-3 mr-1" />
+                )}
+                {reseed.isPending ? "Reseeding…" : "Yes, Reseed Now"}
+              </Button>
+            </div>
+            {reseed.isError && (
+              <p className="text-xs text-destructive flex items-center gap-1.5">
+                <AlertCircle className="h-3 w-3" />
+                {(reseed.error as Error).message}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Reset all matches back to their original state — useful after testing.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+              onClick={() => { reseed.reset(); setConfirmReseed(true); }}
+            >
+              <Database className="h-3.5 w-3.5 mr-1.5" />
+              Reseed Database
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
