@@ -44,13 +44,13 @@ waitForPort = 5000
 name = "API Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
-waitForPort = 8080
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "while ! PORT=8080 pnpm --filter @workspace/api-server run dev; do echo 'Port 8080 in use, retrying in 5s...'; sleep 5; done"
+waitForPort = 8080
 
 [[workflows.workflow]]
 name = "FanVerse Mobile"
@@ -86,11 +86,7 @@ externalPort = 5173
 
 [[ports]]
 localPort = 8080
-externalPort = 80
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
+externalPort = 8080
 
 [[ports]]
 localPort = 8082
