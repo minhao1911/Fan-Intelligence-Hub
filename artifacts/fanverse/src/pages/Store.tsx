@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, Star, Sparkles, ShieldCheck, Zap, Check, Award } from "lucide-react";
+import { Crown, Star, Sparkles, ShieldCheck, Zap, Check, Award, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import {
   useBuyPremium,
   usePurchaseProduct,
   useVerifyPayment,
+  usePaymentsStatus,
 } from "@/hooks/useMonetization";
 import { toast } from "sonner";
 
@@ -76,11 +77,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 export default function Store() {
   const { data: entitlements, refetch: refetchEntitlements } = useUserEntitlements();
   const { data: products } = useProducts();
+  const { data: paymentsStatus } = usePaymentsStatus();
   const buyFounderPass = useBuyFounderPass();
   const buyPremium = useBuyPremium();
   const purchaseCosmetic = usePurchaseProduct();
   const { verifyFounderPass, verifySubscription, verifyCosmetic } = useVerifyPayment();
   const [loading, setLoading] = useState<string | null>(null);
+  const paymentsDisabled = paymentsStatus && !paymentsStatus.paymentsEnabled;
 
   async function handleFounderPass() {
     setLoading("founder");
@@ -187,6 +190,17 @@ export default function Store() {
         <p className="text-muted-foreground mt-1">Unlock exclusive benefits, badges, and profile cosmetics.</p>
       </div>
 
+      {/* ── Payments unavailable banner ───────────────────────── */}
+      {paymentsDisabled && (
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm">
+          <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold text-yellow-400">Payments unavailable — </span>
+            <span className="text-muted-foreground">purchases are disabled until Razorpay credentials are configured. Add <code className="text-yellow-400 font-mono text-xs">RAZORPAY_KEY_ID</code> and <code className="text-yellow-400 font-mono text-xs">RAZORPAY_KEY_SECRET</code> to your Secrets to enable checkout.</span>
+          </div>
+        </div>
+      )}
+
       {/* ── Premium Tier Cards ─────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
@@ -219,9 +233,9 @@ export default function Store() {
             <Button
               className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-heading font-bold uppercase tracking-wide"
               onClick={handleFounderPass}
-              disabled={loading === "founder"}
+              disabled={loading === "founder" || !!paymentsDisabled}
             >
-              {loading === "founder" ? "Opening Checkout…" : "Claim Founder Pass — ₹999"}
+              {loading === "founder" ? "Opening Checkout…" : paymentsDisabled ? "Payments Unavailable" : "Claim Founder Pass — ₹999"}
             </Button>
           )}
         </div>
@@ -268,9 +282,9 @@ export default function Store() {
             <Button
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-heading font-bold uppercase tracking-wide"
               onClick={handlePremium}
-              disabled={loading === "premium"}
+              disabled={loading === "premium" || !!paymentsDisabled}
             >
-              {loading === "premium" ? "Opening Checkout…" : "Get Premium — ₹99/month"}
+              {loading === "premium" ? "Opening Checkout…" : paymentsDisabled ? "Payments Unavailable" : "Get Premium — ₹99/month"}
             </Button>
           )}
         </div>
@@ -318,9 +332,9 @@ export default function Store() {
                             variant="outline"
                             className="text-xs font-bold border-primary/40 hover:bg-primary/10 hover:border-primary"
                             onClick={() => handleCosmeticPurchase(product.id, product.name)}
-                            disabled={!!isLoadingThis}
+                            disabled={!!isLoadingThis || !!paymentsDisabled}
                           >
-                            {isLoadingThis ? "Opening…" : `Buy — ₹${(product.price / 100).toFixed(0)}`}
+                            {isLoadingThis ? "Opening…" : paymentsDisabled ? "Unavailable" : `Buy — ₹${(product.price / 100).toFixed(0)}`}
                           </Button>
                         )}
                       </div>

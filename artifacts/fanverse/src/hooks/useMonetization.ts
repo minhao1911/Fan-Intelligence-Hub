@@ -18,6 +18,17 @@ async function apiFetch(url: string, getToken: () => Promise<string | null>, opt
   return res.json();
 }
 
+export function usePaymentsStatus() {
+  return useQuery({
+    queryKey: ["monetization", "status"],
+    queryFn: async () => {
+      const res = await fetch("/api/monetization/status");
+      return res.json() as Promise<{ paymentsEnabled: boolean; message: string }>;
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function useUserEntitlements() {
   const { getToken } = useAuth();
   return useQuery({
