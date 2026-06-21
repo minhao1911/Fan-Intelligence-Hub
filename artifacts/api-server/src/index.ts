@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedProducts } from "./lib/seedProducts";
+import { startMatchSimulator } from "./lib/matchSimulator";
 
 const rawPort = process.env["PORT"];
 
@@ -29,4 +30,6 @@ app.listen(port, async (err) => {
   } catch (e) {
     logger.warn({ err: e }, "Product seeding failed (non-fatal)");
   }
+
+  startMatchSimulator();
 });
