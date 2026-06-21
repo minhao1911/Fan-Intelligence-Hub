@@ -3,3 +3,4 @@ export * from "./nations";
 export * from "./matches";
 export * from "./discussions";
 export * from "./groups";
+export * from "./monetization";

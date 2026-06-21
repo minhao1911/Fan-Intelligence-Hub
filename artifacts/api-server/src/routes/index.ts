@@ -7,6 +7,7 @@ import discussionsRouter from "./discussions";
 import statsRouter from "./stats";
 import fixturesRouter from "./fixtures";
 import groupsRouter from "./groups";
+import monetizationRouter from "./monetization";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(discussionsRouter);
 router.use(statsRouter);
 router.use(fixturesRouter);
 router.use(groupsRouter);
+router.use(monetizationRouter);
 
 export default router;

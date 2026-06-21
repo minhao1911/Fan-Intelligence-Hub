@@ -26,6 +26,8 @@ import GroupDetail from "./pages/GroupDetail";
 import Predictions from "./pages/Predictions";
 import Admin from "./pages/Admin";
 import MatchPredictionStats from "./pages/MatchPredictionStats";
+import Store from "./pages/Store";
+import RevenueDashboard from "./pages/RevenueDashboard";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -179,6 +181,8 @@ function AuthenticatedApp() {
             <Route path="/groups/:id" component={GroupDetail} />
             <Route path="/predictions" component={Predictions} />
             <Route path="/admin" component={Admin} />
+            <Route path="/store" component={Store} />
+            <Route path="/admin/revenue" component={RevenueDashboard} />
             <Route path="/discussions" component={Discussions} />
             <Route path="/discussions/:id" component={DiscussionDetail} />
             <Route path="/leaderboard" component={Leaderboard} />

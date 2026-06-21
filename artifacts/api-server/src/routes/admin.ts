@@ -65,7 +65,7 @@ router.get("/admin/matches", requireAuth, async (req, res): Promise<void> => {
 
 // ── Update match status ───────────────────────────────────────────────────────
 router.patch("/admin/matches/:matchId/status", requireAuth, async (req, res): Promise<void> => {
-  const matchId = parseInt(req.params.matchId, 10);
+  const matchId = parseInt(req.params.matchId as string, 10);
   const { status } = req.body;
 
   if (!["upcoming", "live"].includes(status)) {
@@ -86,7 +86,7 @@ router.patch("/admin/matches/:matchId/status", requireAuth, async (req, res): Pr
 
 // ── Resolve a match and settle predictions ────────────────────────────────────
 router.post("/admin/matches/:matchId/resolve", requireAuth, async (req, res): Promise<void> => {
-  const matchId = parseInt(req.params.matchId, 10);
+  const matchId = parseInt(req.params.matchId as string, 10);
   const { homeScore, awayScore } = req.body;
 
   if (typeof homeScore !== "number" || typeof awayScore !== "number") {
