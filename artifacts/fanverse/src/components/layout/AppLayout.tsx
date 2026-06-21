@@ -55,7 +55,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const mobileNavRight = [
     { name: "Matches",  href: "/matches",     icon: CalendarDays, live: hasLive },
     { name: "Rank",     href: "/leaderboard", icon: Trophy },
-    { name: "Discuss",  href: "/discussions", icon: MessageSquare },
   ];
 
   const primaryNav = navigation.slice(0, 7);
