@@ -24,6 +24,7 @@ import NationRivalryCard from "@/components/NationRivalryCard";
 import BracketProgressWidget from "@/components/BracketProgressWidget";
 import FanLiveChat from "@/components/FanLiveChat";
 import LiveMatchTicker from "@/components/LiveMatchTicker";
+import AnnouncementFeed from "@/components/AnnouncementFeed";
 
 const NAV_LINKS = [
   { href: "/matches",     emoji: "⚽", label: "Live Match Center" },
@@ -209,6 +210,9 @@ export default function Feed() {
 
           {/* Live Match Ticker — sticky strip, only visible when matches are live */}
           <LiveMatchTicker />
+
+          {/* Official Announcements from FanVerse HQ */}
+          <AnnouncementFeed />
 
           {/* Match Day Countdown — only shows when a match is within 2 hours or live */}
           <MatchDayCountdown />

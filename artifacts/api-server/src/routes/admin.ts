@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, sql, and, count, inArray } from "drizzle-orm";
+import { eq, sql, and, count, inArray, desc } from "drizzle-orm";
 import {
   db,
   matchesTable,
@@ -10,6 +10,7 @@ import {
   reactionsTable,
   usersTable,
   nationsTable,
+  announcementsTable,
 } from "@workspace/db";
 import { nations, generateMatchRows } from "@workspace/db/seed-data";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -179,6 +180,57 @@ router.post("/admin/reseed", requireAuth, async (req, res): Promise<void> => {
     nationsCount: nations.length,
     matchesCount: matchRows.length,
   });
+});
+
+// ── Announcements CRUD ────────────────────────────────────────────────────────
+router.get("/admin/announcements", requireAuth, async (_req, res): Promise<void> => {
+  const rows = await db
+    .select()
+    .from(announcementsTable)
+    .orderBy(desc(announcementsTable.createdAt));
+  res.json(rows);
+});
+
+router.post("/admin/announcements", requireAuth, async (req, res): Promise<void> => {
+  const { title, content, category = "update", isPinned = false } = req.body;
+  if (!title?.trim() || !content?.trim()) {
+    res.status(400).json({ error: "title and content are required" });
+    return;
+  }
+  const clerkUserId = (req as any).auth?.userId ?? null;
+  const [row] = await db
+    .insert(announcementsTable)
+    .values({
+      title: String(title).trim(),
+      content: String(content).trim(),
+      category: String(category),
+      isPinned: Boolean(isPinned),
+      isPublished: true,
+      authorClerkId: clerkUserId,
+    })
+    .returning();
+  res.status(201).json(row);
+});
+
+router.patch("/admin/announcements/:id", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  const { isPinned, isPublished } = req.body;
+  const updates: Record<string, unknown> = {};
+  if (isPinned !== undefined) updates.isPinned = Boolean(isPinned);
+  if (isPublished !== undefined) updates.isPublished = Boolean(isPublished);
+  const [row] = await db
+    .update(announcementsTable)
+    .set(updates)
+    .where(eq(announcementsTable.id, id))
+    .returning();
+  if (!row) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(row);
+});
+
+router.delete("/admin/announcements/:id", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id as string, 10);
+  await db.delete(announcementsTable).where(eq(announcementsTable.id, id));
+  res.json({ ok: true });
 });
 
 export default router;
