@@ -39,7 +39,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Pulse",       href: "/pulse",        icon: Activity },
     { name: "Fixtures",    href: "/fixtures",     icon: ListOrdered },
     { name: "Nations",     href: "/nations",      icon: Globe },
-    { name: "Matches",     href: "/matches",      icon: CalendarDays },
+    { name: "Matches",     href: "/matches",      icon: CalendarDays, live: hasLive },
     { name: "Predictions", href: "/predictions",  icon: Target },
     { name: "Leaderboard", href: "/leaderboard",  icon: Trophy },
     { name: "Groups",      href: "/groups",       icon: UsersRound },
@@ -53,9 +53,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Nations", href: "/nations", icon: Globe },
   ];
   const mobileNavRight = [
-    { name: "Matches",     href: "/matches",     icon: CalendarDays },
-    { name: "Predictions", href: "/predictions", icon: Target },
-    { name: "Profile",     href: "/profile",     icon: User },
+    { name: "Matches",  href: "/matches",  icon: CalendarDays, live: hasLive },
+    { name: "Rank",     href: "/leaderboard", icon: Trophy },
+    { name: "Profile",  href: "/profile",  icon: User },
   ];
 
   const primaryNav = navigation.slice(0, 7);
@@ -77,21 +77,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Link>
 
         {/* Primary nav — desktop */}
-        <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+        <nav className="hidden lg:flex items-center gap-0.5 flex-1 h-full">
           {primaryNav.map((item) => {
             const isActive = location.startsWith(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all duration-150 ${
+                className={`relative flex items-center gap-1.5 px-2.5 h-full text-xs font-semibold uppercase tracking-wide transition-all duration-150 ${
                   isActive
-                    ? "bg-primary/12 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
+                {/* Active bottom indicator */}
+                {isActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-primary" />
+                )}
                 <item.icon className="h-3.5 w-3.5 shrink-0" />
                 <span>{item.name}</span>
+                {/* Live dot badge */}
+                {"live" in item && item.live && (
+                  <span className="relative flex h-1.5 w-1.5 ml-0.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -146,7 +157,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 transition-colors ${
+              location.startsWith("/discussions") ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+            asChild
+          >
             <Link href="/discussions">
               <MessageSquare className="h-4.5 w-4.5" />
             </Link>
@@ -214,14 +232,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <LiveScoreTicker />
 
       {/* ── Page content ───────────────────────────────────────── */}
-      <main className={`flex-1 pb-16 lg:pb-4 transition-all duration-300 ${hasLive ? "pt-22" : "pt-14"}`}>
-        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 py-6">
+      <main className={`flex-1 pb-20 lg:pb-6 transition-all duration-300 ${hasLive ? "pt-22" : "pt-14"}`}>
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-8 py-6 md:py-8">
           {children}
         </div>
       </main>
 
       {/* ── Mobile bottom navigation ────────────────────────────── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/60 flex items-stretch h-16">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/60 flex items-stretch h-16 safe-area-bottom">
         {/* Left two: Home + Nations */}
         {mobileNavLeft.map((item) => {
           const isActive = location.startsWith(item.href);
@@ -229,11 +247,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+              className={`flex-1 relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
+              {isActive && (
+                <span className="absolute top-0 left-3 right-3 h-0.5 rounded-b-full bg-primary" />
+              )}
+              <item.icon className={`h-5 w-5 transition-transform duration-150 ${isActive ? "scale-110" : ""}`} />
               {item.name}
             </Link>
           );
@@ -242,7 +263,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Centre Search FAB */}
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
         >
           <div className="w-10 h-10 -mt-4 rounded-full bg-primary flex items-center justify-center shadow-[0_0_18px_rgba(251,191,36,0.4)] border-[3px] border-card">
             <Search className="h-4 w-4 text-primary-foreground" />
@@ -250,18 +271,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span>Search</span>
         </button>
 
-        {/* Right three: Matches + Predictions + Profile */}
+        {/* Right three */}
         {mobileNavRight.map((item) => {
           const isActive = location.startsWith(item.href);
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+              className={`flex-1 relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
+              {isActive && (
+                <span className="absolute top-0 left-3 right-3 h-0.5 rounded-b-full bg-primary" />
+              )}
+              <div className="relative">
+                <item.icon className={`h-5 w-5 transition-transform duration-150 ${isActive ? "scale-110" : ""}`} />
+                {"live" in item && item.live && (
+                  <span className="absolute -top-1 -right-1 flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                  </span>
+                )}
+              </div>
               {item.name}
             </Link>
           );

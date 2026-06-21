@@ -130,20 +130,38 @@ export default function Discussions() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 bg-card rounded-xl animate-pulse border border-border" />
+        <div className="space-y-3 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-card rounded-xl border border-border p-5 flex gap-5">
+              <div className="flex flex-col items-center gap-2 shrink-0 pt-0.5">
+                <div className="h-5 w-5 rounded-full bg-muted" />
+                <div className="h-3 w-5 rounded bg-muted" />
+              </div>
+              <div className="flex-1 min-w-0 space-y-2.5">
+                <div className="flex gap-2">
+                  <div className="h-4 w-16 rounded bg-muted" />
+                  <div className="h-4 w-12 rounded bg-muted" />
+                </div>
+                <div className="h-5 w-3/4 rounded bg-muted" />
+                <div className="h-3 w-full rounded bg-muted" />
+                <div className="h-3 w-2/3 rounded bg-muted" />
+              </div>
+            </div>
           ))}
         </div>
       ) : discussions?.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-xl">
-          No discussions yet. Be the first to start one.
+        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/60 rounded-2xl gap-3 text-center">
+          <span className="text-5xl">💬</span>
+          <div>
+            <p className="font-heading font-bold uppercase text-foreground tracking-wide">No Threads Yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Be the first to spark a conversation.</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
           {discussions?.map((discussion) => (
             <Link key={discussion.id} href={`/discussions/${discussion.id}`}>
-              <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
+              <Card className="bg-card border-border hover:border-primary/40 hover:shadow-lg hover:shadow-primary/8 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-5">
                   <div className="flex gap-5">
                     {/* Upvote */}
