@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, ilike, and, sql } from "drizzle-orm";
 import { db, nationsTable, usersTable, matchesTable, pollVotesTable, pollOptionsTable, pollsTable, nationConfidenceVotesTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requirePremium } from "../middlewares/requirePremium";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 
 const router: IRouter = Router();
@@ -186,7 +187,7 @@ router.post("/nations/:code/leave", requireAuth, async (req, res): Promise<void>
   });
 });
 
-router.get("/nations/:code/pulse", async (req, res): Promise<void> => {
+router.get("/nations/:code/pulse", requireAuth, requirePremium, async (req, res): Promise<void> => {
   const code = Array.isArray(req.params.code) ? req.params.code[0] : req.params.code;
   const [nation] = await db.select().from(nationsTable).where(eq(nationsTable.code, code.toUpperCase()));
   if (!nation) {

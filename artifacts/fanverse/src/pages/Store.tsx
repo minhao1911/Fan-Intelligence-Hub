@@ -172,10 +172,10 @@ export default function Store() {
     }
   }
 
-  const byCategory = (products ?? []).reduce<Record<string, any[]>>((acc, p) => {
-    (acc[p.category] = acc[p.category] ?? []).push(p);
-    return acc;
-  }, {});
+  const byCategory: Record<string, any[]> = {};
+  for (const p of (products ?? []) as any[]) {
+    (byCategory[p.category] = byCategory[p.category] ?? []).push(p);
+  }
   const categories = Object.keys(byCategory);
 
   return (
@@ -293,7 +293,7 @@ export default function Store() {
             {categories.map((cat) => (
               <TabsContent key={cat} value={cat}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {byCategory[cat].map((product) => {
+                  {byCategory[cat].map((product: any) => {
                     const owned = (entitlements?.ownedProductIds ?? []).includes(product.id);
                     const isLoadingThis = loading === `cosmetic-${product.id}`;
                     return (

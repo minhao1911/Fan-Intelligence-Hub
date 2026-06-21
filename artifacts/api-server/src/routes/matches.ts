@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { db, matchesTable, nationsTable, pollsTable, pollOptionsTable, pollVotesTable, reactionsTable, usersTable, matchPredictionsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requirePremium } from "../middlewares/requirePremium";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 import { CastPollVoteBody, SubmitReactionBody } from "@workspace/api-zod";
 
@@ -159,7 +160,7 @@ router.get("/matches/:id", async (req, res): Promise<void> => {
   });
 });
 
-router.get("/matches/:id/pulse", async (req, res): Promise<void> => {
+router.get("/matches/:id/pulse", requireAuth, requirePremium, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
 

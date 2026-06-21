@@ -1,11 +1,13 @@
 import { useParams, Link } from "wouter";
-import { useGetNation, useGetNationPulse, useJoinNation, useLeaveNation, getGetNationQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetNation, useJoinNation, useLeaveNation, getGetNationQueryKey } from "@workspace/api-client-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
-import { ArrowLeft, Users, Shield, TrendingUp, TrendingDown, Minus, Star } from "lucide-react";
+import { ArrowLeft, Users, Shield, TrendingUp, TrendingDown, Minus, Star, Lock, Zap } from "lucide-react";
+import { useAuth } from "@clerk/react";
+import { getBaseUrl } from "@/lib/api";
 
 export default function NationDetail() {
   const { code } = useParams();
@@ -13,7 +15,25 @@ export default function NationDetail() {
   const { data: nation, isLoading } = useGetNation(code as string, {
     query: { enabled: !!code, queryKey: getGetNationQueryKey(code as string) },
   });
-  const { data: pulse } = useGetNationPulse(code as string, { query: { enabled: !!code } });
+  const { getToken, isSignedIn } = useAuth();
+  const { data: pulse, error: pulseError } = useQuery({
+    queryKey: ["nation-pulse", code],
+    enabled: !!code && isSignedIn === true,
+    queryFn: async () => {
+      const token = await getToken();
+      const res = await fetch(`${getBaseUrl()}api/nations/${code}/pulse`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 402) {
+        const err = new Error("premium_required");
+        (err as any).isPremiumRequired = true;
+        throw err;
+      }
+      if (!res.ok) throw new Error("Failed to fetch pulse");
+      return res.json();
+    },
+  });
+  const isPremiumRequired = (pulseError as any)?.isPremiumRequired === true;
 
   const joinNation = useJoinNation();
   const leaveNation = useLeaveNation();
@@ -183,9 +203,27 @@ export default function NationDetail() {
         <div className="space-y-6">
           {/* Pulse */}
           <h2 className="text-xl font-heading font-bold uppercase border-b border-border/50 pb-2">Pulse</h2>
-          <Card className="bg-card border-border">
+          <Card className={`border-border overflow-hidden ${isPremiumRequired ? "bg-card/50" : "bg-card"}`}>
             <CardContent className="p-5 space-y-5">
-              {pulse ? (
+              {isPremiumRequired ? (
+                <div className="flex flex-col items-center gap-4 py-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-heading font-bold text-sm text-foreground uppercase tracking-wide">Premium Analytics</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-[200px]">
+                      Advanced Nation Pulse — win confidence, fan mood, top contributors — requires Premium.
+                    </p>
+                  </div>
+                  <Button asChild size="sm" className="font-heading uppercase tracking-widest text-xs w-full bg-primary hover:bg-primary/90">
+                    <Link href="/store">
+                      <Zap className="w-3.5 h-3.5 mr-1.5" />
+                      Unlock for ₹99/mo
+                    </Link>
+                  </Button>
+                </div>
+              ) : pulse ? (
                 <>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Trend</span>
@@ -220,13 +258,15 @@ export default function NationDetail() {
                   </Button>
                 </>
               ) : (
-                <div className="text-center py-6 text-muted-foreground text-sm">Gathering pulse data...</div>
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  {isSignedIn ? "Gathering pulse data..." : "Sign in to view pulse analytics"}
+                </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Top Contributors */}
-          {pulse?.topContributors?.length > 0 && (
+          {/* Top Contributors — only shown for premium users with data */}
+          {!isPremiumRequired && pulse?.topContributors?.length > 0 && (
             <>
               <h2 className="text-xl font-heading font-bold uppercase border-b border-border/50 pb-2">Top Fans</h2>
               <div className="space-y-2">
