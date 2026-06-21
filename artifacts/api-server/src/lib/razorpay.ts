@@ -2,6 +2,9 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1f8f56d (Feat: add admin announcement system, match auto-updater, and UI navigation tweaks)
 let _razorpay: Razorpay | null = null;
 
 function getRazorpay(): Razorpay {
@@ -10,6 +13,7 @@ function getRazorpay(): Razorpay {
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) {
     throw new Error("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set to use payments");
+<<<<<<< HEAD
   }
   _razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
   return _razorpay;
@@ -23,15 +27,24 @@ function getRazorpayClient(): Razorpay {
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 >>>>>>> b614d52 (Make Razorpay initialization lazy to allow server startup without credentials)
+=======
+  }
+  _razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+  return _razorpay;
+>>>>>>> 1f8f56d (Feat: add admin announcement system, match auto-updater, and UI navigation tweaks)
 }
 
 export const razorpay = new Proxy({} as Razorpay, {
   get(_target, prop) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return (getRazorpay() as any)[prop];
 =======
     return (getRazorpayClient() as unknown as Record<string | symbol, unknown>)[prop];
 >>>>>>> b614d52 (Make Razorpay initialization lazy to allow server startup without credentials)
+=======
+    return (getRazorpay() as any)[prop];
+>>>>>>> 1f8f56d (Feat: add admin announcement system, match auto-updater, and UI navigation tweaks)
   },
 });
 

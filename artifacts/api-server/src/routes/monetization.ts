@@ -16,28 +16,6 @@ import { razorpay, verifyPaymentSignature, verifyWebhookSignature } from "../lib
 
 const router = Router();
 
-// ── Payments configuration check ─────────────────────────────────────────────
-router.get("/monetization/status", (_req, res): void => {
-  const configured = !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
-  res.json({
-    paymentsEnabled: configured,
-    message: configured
-      ? "Payments are configured and ready."
-      : "Payments are not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to enable purchases.",
-  });
-});
-
-function requirePayments(res: any): boolean {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    res.status(503).json({
-      error: "Payments are not configured",
-      message: "Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to enable purchases.",
-    });
-    return false;
-  }
-  return true;
-}
-
 const FOUNDER_PASS_PRICE = 99900; // ₹999 in paise
 const PREMIUM_PRICE = 9900;       // ₹99 in paise
 const FOUNDER_PASS_LIMIT = 1000;
@@ -81,7 +59,6 @@ router.get("/monetization/me", requireAuth, async (req, res): Promise<void> => {
 
 // ── Founder Pass: create order ────────────────────────────────────────────────
 router.post("/monetization/founder-pass/order", requireAuth, async (req, res): Promise<void> => {
-  if (!requirePayments(res)) return;
   const user = await getOrCreateUser((req as any).clerkUserId);
 
   const [existing] = await db
@@ -162,7 +139,6 @@ router.post("/monetization/founder-pass/verify", requireAuth, async (req, res): 
 
 // ── Premium Subscription: create order ───────────────────────────────────────
 router.post("/monetization/subscription/order", requireAuth, async (req, res): Promise<void> => {
-  if (!requirePayments(res)) return;
   const user = await getOrCreateUser((req as any).clerkUserId);
   const now = new Date();
 
@@ -284,7 +260,6 @@ router.get("/monetization/products", requireAuth, async (req, res): Promise<void
 
 // ── Cosmetic: create order ────────────────────────────────────────────────────
 router.post("/monetization/cosmetic/order", requireAuth, async (req, res): Promise<void> => {
-  if (!requirePayments(res)) return;
   const user = await getOrCreateUser((req as any).clerkUserId);
   const { productId } = req.body;
 

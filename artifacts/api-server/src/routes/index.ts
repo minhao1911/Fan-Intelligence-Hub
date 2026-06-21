@@ -8,7 +8,6 @@ import statsRouter from "./stats";
 import fixturesRouter from "./fixtures";
 import groupsRouter from "./groups";
 import monetizationRouter from "./monetization";
-import announcementsRouter from "./announcements";
 
 const router: IRouter = Router();
 
@@ -21,6 +20,5 @@ router.use(statsRouter);
 router.use(fixturesRouter);
 router.use(groupsRouter);
 router.use(monetizationRouter);
-router.use(announcementsRouter);
 
 export default router;

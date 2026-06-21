@@ -1,5 +1,5 @@
-import { TrendingUp, Users, Crown, ShoppingBag, XCircle, Percent, IndianRupee, Award, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
-import { useRevenueDashboard, usePaymentsStatus } from "@/hooks/useMonetization";
+import { TrendingUp, Users, Crown, ShoppingBag, XCircle, Percent, IndianRupee, Award } from "lucide-react";
+import { useRevenueDashboard } from "@/hooks/useMonetization";
 
 function StatCard({ icon, label, value, sub, accent }: {
   icon: React.ReactNode;
@@ -24,7 +24,6 @@ function StatCard({ icon, label, value, sub, accent }: {
 
 export default function RevenueDashboard() {
   const { data, isLoading, error } = useRevenueDashboard();
-  const { data: paymentsStatus } = usePaymentsStatus();
 
   if (isLoading) {
     return (
@@ -52,34 +51,6 @@ export default function RevenueDashboard() {
         </h1>
         <p className="text-muted-foreground mt-1">Real-time monetization analytics for FanVerse.</p>
       </div>
-
-      {/* ── Razorpay setup guide ──────────────────────────────────── */}
-      {paymentsStatus && (
-        <div className={`rounded-xl border p-5 flex items-start gap-4 ${paymentsStatus.paymentsEnabled ? "border-green-500/30 bg-green-500/5" : "border-yellow-500/30 bg-yellow-500/5"}`}>
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${paymentsStatus.paymentsEnabled ? "bg-green-500/15" : "bg-yellow-500/15"}`}>
-            {paymentsStatus.paymentsEnabled
-              ? <CheckCircle2 className="h-5 w-5 text-green-500" />
-              : <AlertTriangle className="h-5 w-5 text-yellow-500" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-bold ${paymentsStatus.paymentsEnabled ? "text-green-400" : "text-yellow-400"}`}>
-              {paymentsStatus.paymentsEnabled ? "Razorpay configured — payments active" : "Razorpay not configured — payments disabled"}
-            </p>
-            {!paymentsStatus.paymentsEnabled && (
-              <div className="mt-2 space-y-1.5 text-xs text-muted-foreground">
-                <p>To enable checkout, add the following secrets in your Replit environment:</p>
-                <ol className="list-decimal list-inside space-y-1 pl-1">
-                  <li>Go to <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noreferrer" className="text-yellow-400 inline-flex items-center gap-0.5 hover:underline">dashboard.razorpay.com/app/keys <ExternalLink className="h-2.5 w-2.5" /></a> and generate an API key pair</li>
-                  <li>Add <code className="font-mono bg-muted px-1 py-0.5 rounded text-yellow-300">RAZORPAY_KEY_ID</code> — your public key (starts with <code className="font-mono text-yellow-300">rzp_</code>)</li>
-                  <li>Add <code className="font-mono bg-muted px-1 py-0.5 rounded text-yellow-300">RAZORPAY_KEY_SECRET</code> — your secret key</li>
-                  <li>Optionally add <code className="font-mono bg-muted px-1 py-0.5 rounded text-yellow-300">RAZORPAY_WEBHOOK_SECRET</code> for webhook signature verification</li>
-                  <li>Restart the API server — payments will activate automatically</li>
-                </ol>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── Revenue KPIs ─────────────────────────────────────────── */}
       <div>
