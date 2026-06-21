@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
+<<<<<<< HEAD
 let _razorpay: Razorpay | null = null;
 
 function getRazorpay(): Razorpay {
@@ -12,11 +13,25 @@ function getRazorpay(): Razorpay {
   }
   _razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
   return _razorpay;
+=======
+function getRazorpayClient(): Razorpay {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set");
+  }
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+>>>>>>> b614d52 (Make Razorpay initialization lazy to allow server startup without credentials)
 }
 
 export const razorpay = new Proxy({} as Razorpay, {
   get(_target, prop) {
+<<<<<<< HEAD
     return (getRazorpay() as any)[prop];
+=======
+    return (getRazorpayClient() as unknown as Record<string | symbol, unknown>)[prop];
+>>>>>>> b614d52 (Make Razorpay initialization lazy to allow server startup without credentials)
   },
 });
 
