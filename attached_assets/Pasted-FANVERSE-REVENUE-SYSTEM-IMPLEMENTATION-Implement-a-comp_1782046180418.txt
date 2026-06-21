@@ -1,0 +1,142 @@
+FANVERSE REVENUE SYSTEM IMPLEMENTATION
+
+Implement a complete monetization system for FanVerse using Razorpay and Supabase.
+
+IMPORTANT:
+Do not create mock screens or placeholder payments.
+Build a fully functional production-ready payment system.
+
+FEATURE 1: FOUNDER PASS
+
+Create a one-time purchase product.
+
+Product Name:
+FanVerse Founder Pass
+
+Price:
+₹999
+
+Benefits:
+
+* Founder Badge
+* Founder Profile Frame
+* Founder Number (e.g. Founder #001)
+* Lifetime Recognition
+
+Database Requirements:
+
+founder_passes
+
+* id
+* user_id
+* founder_number
+* purchase_date
+* payment_id
+
+Only first 1000 users can purchase.
+
+FEATURE 2: PREMIUM SUBSCRIPTION
+
+Product Name:
+FanVerse Premium
+
+Price:
+₹99/month
+
+Benefits:
+
+* Ad Free Experience
+* Advanced Nation Pulse Analytics
+* Premium Badge
+* Historical Confidence Trends
+* Premium Profile Customization
+
+Database:
+
+subscriptions
+
+* id
+* user_id
+* plan
+* start_date
+* expiry_date
+* status
+* razorpay_subscription_id
+
+FEATURE 3: PROFILE COSMETICS
+
+Users can purchase:
+
+* Nation Frames
+* Animated Flags
+* Special Themes
+* World Cup Themes
+
+Create marketplace tables:
+
+products
+purchases
+user_cosmetics
+
+FEATURE 4: RAZORPAY INTEGRATION
+
+Implement:
+
+* Razorpay Checkout
+* Payment Verification
+* Webhook Verification
+* Subscription Management
+* Failed Payment Handling
+* Cancellation Flow
+
+Store all payment data securely.
+
+FEATURE 5: ACCESS CONTROL
+
+Premium features must be protected at backend level.
+
+Do not rely on frontend checks.
+
+Verify premium status before granting access.
+
+FEATURE 6: ADMIN DASHBOARD
+
+Create revenue dashboard showing:
+
+* Total Revenue
+* Monthly Revenue
+* Active Subscribers
+* Founder Pass Sales
+* Cosmetic Sales
+* Subscription Churn
+
+FEATURE 7: ANALYTICS
+
+Track:
+
+* Conversion Rate
+* Trial to Paid Rate
+* Revenue Per User
+* Top Selling Cosmetic
+* Premium Retention
+
+TECHNICAL REQUIREMENTS
+
+* Supabase Database
+* Razorpay API
+* Secure Webhooks
+* Row Level Security
+* Production Ready
+* Mobile Friendly
+
+SUCCESS CRITERIA
+
+A user can:
+
+1. Purchase Founder Pass.
+2. Purchase Premium Subscription.
+3. Purchase Cosmetics.
+4. Automatically receive benefits.
+5. Lose benefits when subscription expires.
+
+All transactions must be real and fully functional.
