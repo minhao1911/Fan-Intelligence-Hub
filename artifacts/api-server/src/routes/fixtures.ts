@@ -10,9 +10,17 @@ function nationToTeam(nation: typeof nationsTable.$inferSelect | undefined, fall
   return { id: 0, name, shortName: name, crest: null, tla: code, flagEmoji: nation?.flagEmoji ?? null };
 }
 
-function mapDbStatus(status: string): "upcoming" | "live" | "completed" {
+function mapDbStatus(status: string, scheduledAt: Date): "upcoming" | "live" | "completed" {
   if (status === "live") return "live";
   if (status === "finished" || status === "completed") return "completed";
+
+  // For matches still stored as "upcoming", derive actual status from kick-off time.
+  // A match is considered live for 110 minutes after kick-off, completed after that.
+  const now = Date.now();
+  const kickOff = scheduledAt.getTime();
+  const elapsed = now - kickOff;
+  if (elapsed > 110 * 60 * 1000) return "completed";
+  if (elapsed > 0) return "live";
   return "upcoming";
 }
 
@@ -45,10 +53,10 @@ function apiStageToDbPattern(apiStage: string): { exact?: string; pattern?: stri
 function computeWinner(
   homeScore: number | null,
   awayScore: number | null,
-  status: string,
+  derivedStatus: "upcoming" | "live" | "completed",
 ): "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null {
+  if (derivedStatus !== "completed") return null;
   if (homeScore === null || awayScore === null) return null;
-  if (status !== "finished" && status !== "completed") return null;
   if (homeScore > awayScore) return "HOME_TEAM";
   if (awayScore > homeScore) return "AWAY_TEAM";
   return "DRAW";
@@ -60,17 +68,18 @@ function formatMatch(
 ) {
   const homeNation = nationMap[m.homeNationCode];
   const awayNation = nationMap[m.awayNationCode];
+  const derivedStatus = mapDbStatus(m.status, m.scheduledAt);
   return {
     id: m.id,
     homeTeam: nationToTeam(homeNation, m.homeNationCode),
     awayTeam: nationToTeam(awayNation, m.awayNationCode),
-    status: mapDbStatus(m.status),
+    status: derivedStatus,
     rawStatus: m.status.toUpperCase(),
     utcDate: m.scheduledAt.toISOString(),
     score: {
       home: m.homeScore ?? null,
       away: m.awayScore ?? null,
-      winner: computeWinner(m.homeScore ?? null, m.awayScore ?? null, m.status),
+      winner: computeWinner(m.homeScore ?? null, m.awayScore ?? null, derivedStatus),
     },
     stage: dbStageToApiStage(m.stage ?? null),
     group: m.stage?.startsWith("Group ") ? m.stage : null,
