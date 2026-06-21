@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useGetLeaderboard, useListNations, useListMatches } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
+import { FounderBadge, PremiumBadge } from "@/components/ui/UserBadges";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
@@ -322,18 +323,32 @@ export default function Leaderboard() {
                     <div className="col-span-5 md:col-span-4 flex items-center gap-2.5 min-w-0">
                       <div className="relative shrink-0">
                         <Avatar className={`h-8 w-8 border transition-all duration-700 ${
-                          flashed ? "border-primary/60 shadow-[0_0_8px_rgba(251,191,36,0.3)]" : rank <= 3 ? "border-primary/30" : "border-border"
+                          (entry.user as any).isFounder ? "border-yellow-400/50 ring-1 ring-yellow-400/40"
+                          : flashed ? "border-primary/60 shadow-[0_0_8px_rgba(251,191,36,0.3)]"
+                          : (entry.user as any).isPremium ? "border-violet-500/40 ring-1 ring-violet-500/30"
+                          : rank <= 3 ? "border-primary/30" : "border-border"
                         }`}>
                           <AvatarImage src={entry.user.avatarUrl || undefined} />
                           <AvatarFallback className="bg-muted text-muted-foreground font-heading text-[10px]">
                             {entry.user.username.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
+                        {(entry.user as any).isFounder && (
+                          <span className="absolute -top-1.5 -right-1.5 text-[9px]" title={`Founder #${(entry.user as any).founderNumber}`}>👑</span>
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-sm font-bold truncate ${rank === 1 ? "text-primary" : "text-foreground"}`}>
-                          {entry.user.username}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className={`text-sm font-bold truncate ${rank === 1 ? "text-primary" : "text-foreground"}`}>
+                            {entry.user.username}
+                          </p>
+                          {(entry.user as any).isFounder && (
+                            <FounderBadge founderNumber={(entry.user as any).founderNumber} size="xs" />
+                          )}
+                          {!(entry.user as any).isFounder && (entry.user as any).isPremium && (
+                            <PremiumBadge size="xs" />
+                          )}
+                        </div>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           {nation && <span className="leading-none">{nation.flagEmoji}</span>}
                           <span className="uppercase tracking-wide">{entry.user.nationCode || "Global"}</span>
@@ -453,6 +468,12 @@ function PodiumCard({
         <p className={`font-bold text-center truncate w-full text-xs leading-tight ${featured ? "text-foreground" : "text-muted-foreground"}`}>
           {entry.user.username}
         </p>
+        {(entry.user as any).isFounder && (
+          <FounderBadge founderNumber={(entry.user as any).founderNumber} size="xs" />
+        )}
+        {!(entry.user as any).isFounder && (entry.user as any).isPremium && (
+          <PremiumBadge size="xs" />
+        )}
 
         <div className="flex items-center gap-1">
           <p className={`font-mono font-black tabular-nums leading-none ${featured || flashed ? "text-primary text-base" : "text-sm text-muted-foreground"}`}>

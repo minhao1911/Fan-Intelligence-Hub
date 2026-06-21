@@ -5,14 +5,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
+import { FounderBadge, PremiumBadge, AvatarWithFrame } from "@/components/ui/UserBadges";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote, Target, CheckCircle2, XCircle, Clock, Flag, Pencil, Loader2 } from "lucide-react";
+import { Activity, MessageSquare, Star, ThumbsUp, Users, Zap, ChevronRight, Vote, Target, CheckCircle2, XCircle, Clock, Flag, Pencil, Loader2, ShoppingBag } from "lucide-react";
 import { Link } from "wouter";
 import { getBaseUrl } from "@/lib/api";
 import { toast } from "sonner";
+import { useUserEntitlements, useEquipCosmetic } from "@/hooks/useMonetization";
 
 const TIERS = [
   { name: "Casual", minPoints: 0, maxPoints: 49 },
@@ -541,6 +543,90 @@ function EditProfileDialog({ open, onClose }: { open: boolean; onClose: () => vo
   );
 }
 
+const CATEGORY_LABELS: Record<string, { label: string; emoji: string }> = {
+  nation_frame:   { label: "Nation Frame",   emoji: "🖼️" },
+  animated_flag:  { label: "Animated Flag",  emoji: "🚩" },
+  worldcup_theme: { label: "World Cup Theme", emoji: "🏆" },
+  special_theme:  { label: "Special Theme",   emoji: "✨" },
+};
+
+function MyCosmeticsSection() {
+  const { data: entitlements, isLoading } = useUserEntitlements();
+  const equipMutation = useEquipCosmetic();
+
+  const owned: Array<{ id: number; name: string; category: string; isEquipped: boolean }> =
+    (entitlements?.cosmetics ?? []).map((c: any) => ({
+      id: c.productId,
+      name: c.productName,
+      category: c.category,
+      isEquipped: c.isEquipped,
+    }));
+
+  if (isLoading) {
+    return (
+      <section>
+        <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+          <ShoppingBag className="text-primary h-5 w-5" /> My Cosmetics
+        </h3>
+        <div className="h-24 bg-card rounded-xl animate-pulse border border-border" />
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h3 className="text-xl font-heading font-bold uppercase mb-4 text-foreground flex items-center gap-2">
+        <ShoppingBag className="text-primary h-5 w-5" /> My Cosmetics
+      </h3>
+
+      {owned.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="p-6 text-center text-muted-foreground">
+            <ShoppingBag className="h-8 w-8 mx-auto mb-3 opacity-20" />
+            <p className="text-sm font-medium">No cosmetics owned yet.</p>
+            <Link href="/store" className="text-primary text-sm font-bold hover:underline mt-1 inline-block">
+              Visit the Store →
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {owned.map((item) => {
+            const meta = CATEGORY_LABELS[item.category] ?? { label: item.category, emoji: "🎨" };
+            return (
+              <div
+                key={item.id}
+                className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${
+                  item.isEquipped
+                    ? "bg-primary/5 border-primary/30"
+                    : "bg-card border-border hover:border-primary/20"
+                }`}
+              >
+                <div className="text-2xl shrink-0">{meta.emoji}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{item.name}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{meta.label}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant={item.isEquipped ? "default" : "outline"}
+                  disabled={equipMutation.isPending}
+                  onClick={() => equipMutation.mutate({ productId: item.id, equip: !item.isEquipped })}
+                  className={`text-[10px] font-heading uppercase tracking-widest shrink-0 ${
+                    item.isEquipped ? "bg-primary text-primary-foreground" : "border-border"
+                  }`}
+                >
+                  {item.isEquipped ? "Equipped ✓" : "Equip"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Profile() {
   const [editOpen, setEditOpen] = useState(false);
   const { data: user, isLoading, isError } = useGetMe();
@@ -586,18 +672,21 @@ export default function Profile() {
       </header>
 
       {/* Identity Card */}
-      <Card className="bg-card border-border overflow-hidden">
-        <div className="h-28 bg-gradient-to-r from-primary/20 via-background to-background relative border-b border-border">
+      <Card className={`border-border overflow-hidden ${(user as any).isFounder ? "border-yellow-400/30" : (user as any).isPremium ? "border-violet-500/20" : ""}`}>
+        <div className={`h-28 relative border-b border-border bg-gradient-to-r ${(user as any).isFounder ? "from-yellow-400/20 via-background to-background" : (user as any).isPremium ? "from-violet-500/15 via-background to-background" : "from-primary/20 via-background to-background"}`}>
           <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
         </div>
         <CardContent className="px-8 pb-8">
           <div className="relative flex justify-between items-end -mt-14 mb-6">
-            <Avatar className="w-28 h-28 border-4 border-card rounded-xl shadow-2xl bg-muted">
-              <AvatarImage src={user.avatarUrl || undefined} className="object-cover" />
-              <AvatarFallback className="font-heading text-4xl bg-muted text-muted-foreground">
-                {user.username.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarWithFrame
+              avatarUrl={user.avatarUrl}
+              username={user.username}
+              isFounder={(user as any).isFounder}
+              isPremium={(user as any).isPremium}
+              equippedFrame={(user as any).equippedFrame}
+              size="lg"
+              className="border-4 border-card rounded-xl shadow-2xl"
+            />
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setEditOpen(true)}
@@ -612,7 +701,11 @@ export default function Profile() {
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-3xl font-heading font-bold text-foreground">{user.username}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-3xl font-heading font-bold text-foreground">{user.username}</h2>
+              {(user as any).isFounder && <FounderBadge founderNumber={(user as any).founderNumber} />}
+              {!(user as any).isFounder && (user as any).isPremium && <PremiumBadge />}
+            </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <span className="uppercase tracking-widest text-xs font-semibold">Allegiance:</span>
               <span className="text-foreground font-bold text-sm">{user.nationName || "Unaffiliated Global Fan"}</span>
@@ -638,6 +731,9 @@ export default function Profile() {
 
       {/* Favorite Team */}
       <AllegianceSection nationCode={user.nationCode ?? null} nationName={user.nationName ?? null} />
+
+      {/* My Cosmetics */}
+      <MyCosmeticsSection />
 
       {/* My Predictions */}
       <PredictionsSection />

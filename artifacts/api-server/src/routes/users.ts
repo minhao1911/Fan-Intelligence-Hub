@@ -1,6 +1,10 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, and, ne } from "drizzle-orm";
-import { db, usersTable, nationsTable, matchPredictionsTable, matchesTable, nationConfidenceVotesTable } from "@workspace/db";
+import { eq, desc, and, ne, inArray, sql } from "drizzle-orm";
+import {
+  db, usersTable, nationsTable, matchPredictionsTable, matchesTable,
+  nationConfidenceVotesTable, founderPassesTable, subscriptionsTable,
+  userCosmeticsTable, productsTable,
+} from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
@@ -19,6 +23,28 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     nationName = nation?.name ?? null;
   }
 
+  const [founderPass] = await db.select().from(founderPassesTable).where(eq(founderPassesTable.userId, user.id));
+
+  const now = new Date();
+  const [activeSub] = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(
+      and(
+        eq(subscriptionsTable.userId, user.id),
+        eq(subscriptionsTable.status, "active"),
+        sql`${subscriptionsTable.expiryDate} > ${now}`,
+      ),
+    );
+
+  const equippedCosmetics = await db
+    .select({ productId: userCosmeticsTable.productId, name: productsTable.name, category: productsTable.category })
+    .from(userCosmeticsTable)
+    .innerJoin(productsTable, eq(userCosmeticsTable.productId, productsTable.id))
+    .where(and(eq(userCosmeticsTable.userId, user.id), eq(userCosmeticsTable.isEquipped, true)));
+
+  const equippedFrame = equippedCosmetics.find((c) => c.category === "nation_frame") ?? null;
+
   res.json({
     id: user.id,
     clerkId: user.clerkId,
@@ -33,6 +59,11 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     totalDiscussions: user.totalDiscussions,
     totalPredictions: user.totalPredictions,
     createdAt: user.createdAt.toISOString(),
+    isFounder: !!founderPass,
+    founderNumber: founderPass?.founderNumber ?? null,
+    isPremium: !!activeSub,
+    equippedFrame: equippedFrame ? { productId: equippedFrame.productId, name: equippedFrame.name, category: equippedFrame.category } : null,
+    ownedCosmetics: equippedCosmetics.map((c) => ({ productId: c.productId, name: c.name, category: c.category })),
   });
 });
 
@@ -103,6 +134,27 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     .orderBy(desc(usersTable.reputationPoints))
     .limit(limit);
 
+  const userIds = users.map((u) => u.id);
+  if (userIds.length === 0) { res.json([]); return; }
+
+  const [founderPasses, activeSubs] = await Promise.all([
+    db.select({ userId: founderPassesTable.userId, founderNumber: founderPassesTable.founderNumber })
+      .from(founderPassesTable)
+      .where(inArray(founderPassesTable.userId, userIds)),
+    db.select({ userId: subscriptionsTable.userId })
+      .from(subscriptionsTable)
+      .where(
+        and(
+          inArray(subscriptionsTable.userId, userIds),
+          eq(subscriptionsTable.status, "active"),
+          sql`${subscriptionsTable.expiryDate} > ${new Date()}`,
+        ),
+      ),
+  ]);
+
+  const founderMap = new Map(founderPasses.map((f) => [f.userId, f.founderNumber]));
+  const premiumSet = new Set(activeSubs.map((s) => s.userId));
+
   const leaderboard = users.map((u, i) => ({
     rank: i + 1,
     user: {
@@ -112,6 +164,9 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
       reputationPoints: u.reputationPoints,
       reputationTier: getReputationTier(u.reputationPoints),
       nationCode: u.nationCode,
+      isFounder: founderMap.has(u.id),
+      founderNumber: founderMap.get(u.id) ?? null,
+      isPremium: premiumSet.has(u.id),
     },
     totalVotes: u.totalVotes,
     totalReactions: u.totalReactions,
