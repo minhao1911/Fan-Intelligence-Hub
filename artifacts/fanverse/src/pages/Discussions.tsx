@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListDiscussions, useCreateDiscussion } from "@workspace/api-client-react";
+import { useListDiscussions, useCreateDiscussion, getListDiscussionsQueryKey } from "@workspace/api-client-react";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { MessageSquare, ArrowUpCircle, Plus, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const CATEGORIES = ["all", "analysis", "prediction", "reaction", "general"];
 
@@ -44,7 +45,16 @@ export default function Discussions() {
           setContent("");
           setNewCategory("general");
           setShowForm(false);
-          queryClient.invalidateQueries({ queryKey: ["/api/discussions"] });
+          queryClient.invalidateQueries({ queryKey: getListDiscussionsQueryKey() });
+          toast.success("Thread posted! +8 pts earned", { duration: 3000 });
+        },
+        onError: (err: any) => {
+          const message = err?.response?.data?.error ?? err?.message ?? "Failed to post thread";
+          if (message.toLowerCase().includes("auth") || err?.response?.status === 401) {
+            toast.error("You must be signed in to post a thread.");
+          } else {
+            toast.error(message);
+          }
         },
       },
     );

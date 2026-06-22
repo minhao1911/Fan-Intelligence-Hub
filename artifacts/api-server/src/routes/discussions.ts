@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { db, discussionsTable, commentsTable, discussionUpvotesTable, usersTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
@@ -7,34 +7,55 @@ import { CreateDiscussionBody, AddCommentBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
+/** Batch-format many discussions in 2 queries instead of 2×N. */
+async function formatDiscussions(discussions: any[], viewerUserId?: number) {
+  if (discussions.length === 0) return [];
+
+  const authorIds = [...new Set(discussions.map((d) => d.userId))];
+  const discussionIds = discussions.map((d) => d.id);
+
+  const [authors, upvotes] = await Promise.all([
+    db.select().from(usersTable).where(inArray(usersTable.id, authorIds)),
+    viewerUserId
+      ? db.select({ discussionId: discussionUpvotesTable.discussionId })
+          .from(discussionUpvotesTable)
+          .where(and(
+            inArray(discussionUpvotesTable.discussionId, discussionIds),
+            eq(discussionUpvotesTable.userId, viewerUserId),
+          ))
+      : Promise.resolve([]),
+  ]);
+
+  const authorMap = new Map(authors.map((a) => [a.id, a]));
+  const upvotedSet = new Set((upvotes as { discussionId: number }[]).map((u) => u.discussionId));
+
+  return discussions.map((d) => {
+    const author = authorMap.get(d.userId);
+    return {
+      id: d.id,
+      nationCode: d.nationCode,
+      matchId: d.matchId,
+      userId: d.userId,
+      username: author?.username ?? "Anonymous",
+      avatarUrl: author?.avatarUrl ?? null,
+      userNationCode: author?.nationCode ?? null,
+      reputationTier: getReputationTier(author?.reputationPoints ?? 0),
+      title: d.title,
+      content: d.content,
+      category: d.category,
+      upvotes: d.upvotes,
+      commentCount: d.commentCount,
+      hasUserUpvoted: upvotedSet.has(d.id),
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
+    };
+  });
+}
+
+/** Single-discussion formatter (used for POST response / upvote response). */
 async function formatDiscussion(d: any, userId?: number) {
-  const [author] = await db.select().from(usersTable).where(eq(usersTable.id, d.userId));
-  let hasUserUpvoted = false;
-  if (userId) {
-    const [upvote] = await db
-      .select()
-      .from(discussionUpvotesTable)
-      .where(and(eq(discussionUpvotesTable.discussionId, d.id), eq(discussionUpvotesTable.userId, userId)));
-    hasUserUpvoted = !!upvote;
-  }
-  return {
-    id: d.id,
-    nationCode: d.nationCode,
-    matchId: d.matchId,
-    userId: d.userId,
-    username: author?.username ?? "Anonymous",
-    avatarUrl: author?.avatarUrl ?? null,
-    userNationCode: author?.nationCode ?? null,
-    reputationTier: getReputationTier(author?.reputationPoints ?? 0),
-    title: d.title,
-    content: d.content,
-    category: d.category,
-    upvotes: d.upvotes,
-    commentCount: d.commentCount,
-    hasUserUpvoted,
-    createdAt: d.createdAt.toISOString(),
-    updatedAt: d.updatedAt.toISOString(),
-  };
+  const [formatted] = await formatDiscussions([d], userId);
+  return formatted;
 }
 
 router.get("/discussions", async (req, res): Promise<void> => {
@@ -57,7 +78,7 @@ router.get("/discussions", async (req, res): Promise<void> => {
     .limit(limit)
     .offset(offset);
 
-  const formatted = await Promise.all(discussions.map(d => formatDiscussion(d)));
+  const formatted = await formatDiscussions(discussions);
   res.json(formatted);
 });
 
@@ -82,7 +103,10 @@ router.post("/discussions", requireAuth, async (req, res): Promise<void> => {
 
   await db
     .update(usersTable)
-    .set({ totalDiscussions: sql`${usersTable.totalDiscussions} + 1`, reputationPoints: sql`${usersTable.reputationPoints} + 8` })
+    .set({
+      totalDiscussions: sql`${usersTable.totalDiscussions} + 1`,
+      reputationPoints: sql`${usersTable.reputationPoints} + 8`,
+    })
     .where(eq(usersTable.id, user.id));
 
   const formatted = await formatDiscussion(discussion, user.id);
@@ -99,14 +123,21 @@ router.get("/discussions/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  // Fetch comments + all their authors in 2 queries (no N+1)
   const comments = await db
     .select()
     .from(commentsTable)
     .where(eq(commentsTable.discussionId, id))
     .orderBy(commentsTable.createdAt);
 
-  const formattedComments = await Promise.all(comments.map(async (c) => {
-    const [author] = await db.select().from(usersTable).where(eq(usersTable.id, c.userId));
+  const commentAuthorIds = [...new Set(comments.map((c) => c.userId))];
+  const commentAuthors = commentAuthorIds.length > 0
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, commentAuthorIds))
+    : [];
+  const commentAuthorMap = new Map(commentAuthors.map((a) => [a.id, a]));
+
+  const formattedComments = comments.map((c) => {
+    const author = commentAuthorMap.get(c.userId);
     return {
       id: c.id,
       discussionId: c.discussionId,
@@ -119,7 +150,7 @@ router.get("/discussions/:id", async (req, res): Promise<void> => {
       upvotes: c.upvotes,
       createdAt: c.createdAt.toISOString(),
     };
-  }));
+  });
 
   const base = await formatDiscussion(discussion);
   res.json({ ...base, comments: formattedComments });

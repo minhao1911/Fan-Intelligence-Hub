@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Home, Activity, CalendarDays, Globe, Trophy, User, LogOut,
   Star, ListOrdered, UsersRound, Target, Bell, MessageSquare,
-  Search, ChevronDown, ShieldCheck, Sun, Moon, ShoppingBag
+  Search, ChevronDown, ShieldCheck, Sun, Moon, ShoppingBag, ClipboardList
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useClerk, useUser } from "@clerk/react";
@@ -42,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Matches",     href: "/matches",      icon: CalendarDays, live: hasLive },
     { name: "Predictions", href: "/predictions",  icon: Target },
     { name: "Leaderboard", href: "/leaderboard",  icon: Trophy },
+    { name: "Activity",    href: "/activity",     icon: ClipboardList },
     { name: "Groups",      href: "/groups",       icon: UsersRound },
     { name: "Store",       href: "/store",        icon: ShoppingBag },
     { name: "Profile",     href: "/profile",      icon: User },

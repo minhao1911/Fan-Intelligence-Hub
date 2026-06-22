@@ -28,6 +28,7 @@ import Admin from "./pages/Admin";
 import MatchPredictionStats from "./pages/MatchPredictionStats";
 import Store from "./pages/Store";
 import RevenueDashboard from "./pages/RevenueDashboard";
+import Activity from "./pages/Activity";
 import AppLayout from "./components/layout/AppLayout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -187,6 +188,7 @@ function AuthenticatedApp() {
             <Route path="/discussions/:id" component={DiscussionDetail} />
             <Route path="/leaderboard" component={Leaderboard} />
             <Route path="/profile" component={Profile} />
+            <Route path="/activity" component={Activity} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                 <h2 className="text-2xl font-heading text-primary uppercase">Not Found</h2>

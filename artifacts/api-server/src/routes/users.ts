@@ -4,7 +4,8 @@ import { withCache, cacheDel, cacheDelPrefix, TTL } from "../lib/cache";
 import {
   db, usersTable, nationsTable, matchPredictionsTable, matchesTable,
   nationConfidenceVotesTable, founderPassesTable, subscriptionsTable,
-  userCosmeticsTable, productsTable,
+  userCosmeticsTable, productsTable, discussionsTable, commentsTable,
+  reactionsTable, pollVotesTable,
 } from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -263,4 +264,125 @@ router.get("/me/confidence-votes", requireAuth, async (req, res): Promise<void> 
   })));
 });
 
+router.get("/me/activity", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+  const limit = Math.min(parseInt(String(req.query.limit ?? "50"), 10) || 50, 100);
+
+  const [myDiscussions, myComments, myReactions, myPollVotes] = await Promise.all([
+    db.select({
+      id: discussionsTable.id,
+      title: discussionsTable.title,
+      category: discussionsTable.category,
+      nationCode: discussionsTable.nationCode,
+      matchId: discussionsTable.matchId,
+      createdAt: discussionsTable.createdAt,
+    })
+      .from(discussionsTable)
+      .where(eq(discussionsTable.userId, user.id))
+      .orderBy(desc(discussionsTable.createdAt))
+      .limit(limit),
+
+    db.select({
+      id: commentsTable.id,
+      discussionId: commentsTable.discussionId,
+      content: commentsTable.content,
+      createdAt: commentsTable.createdAt,
+    })
+      .from(commentsTable)
+      .where(eq(commentsTable.userId, user.id))
+      .orderBy(desc(commentsTable.createdAt))
+      .limit(limit),
+
+    db.select({
+      id: reactionsTable.id,
+      matchId: reactionsTable.matchId,
+      reactionType: reactionsTable.reactionType,
+      comment: reactionsTable.comment,
+      createdAt: reactionsTable.createdAt,
+    })
+      .from(reactionsTable)
+      .where(eq(reactionsTable.userId, user.id))
+      .orderBy(desc(reactionsTable.createdAt))
+      .limit(limit),
+
+    db.select({
+      id: pollVotesTable.id,
+      pollId: pollVotesTable.pollId,
+      optionValue: pollVotesTable.optionValue,
+      createdAt: pollVotesTable.createdAt,
+    })
+      .from(pollVotesTable)
+      .where(eq(pollVotesTable.userId, user.id))
+      .orderBy(desc(pollVotesTable.createdAt))
+      .limit(limit),
+  ]);
+
+  // Enrich reactions with match info
+  const reactionMatchIds = [...new Set(myReactions.map((r) => r.matchId))];
+  const reactionMatches = reactionMatchIds.length > 0
+    ? await db.select({
+        id: matchesTable.id,
+        homeNationCode: matchesTable.homeNationCode,
+        awayNationCode: matchesTable.awayNationCode,
+      }).from(matchesTable).where(inArray(matchesTable.id, reactionMatchIds))
+    : [];
+  const reactionMatchMap = new Map(reactionMatches.map((m) => [m.id, m]));
+
+  type ActivityItem = {
+    type: "discussion" | "comment" | "reaction" | "poll_vote";
+    id: number;
+    createdAt: string;
+    pts: number;
+    [key: string]: unknown;
+  };
+
+  const items: ActivityItem[] = [
+    ...myDiscussions.map((d) => ({
+      type: "discussion" as const,
+      id: d.id,
+      title: d.title,
+      category: d.category,
+      nationCode: d.nationCode,
+      matchId: d.matchId,
+      createdAt: d.createdAt.toISOString(),
+      pts: 8,
+    })),
+    ...myComments.map((c) => ({
+      type: "comment" as const,
+      id: c.id,
+      discussionId: c.discussionId,
+      content: c.content,
+      createdAt: c.createdAt.toISOString(),
+      pts: 2,
+    })),
+    ...myReactions.map((r) => {
+      const match = reactionMatchMap.get(r.matchId);
+      return {
+        type: "reaction" as const,
+        id: r.id,
+        matchId: r.matchId,
+        reactionType: r.reactionType,
+        comment: r.comment,
+        homeNationCode: match?.homeNationCode ?? null,
+        awayNationCode: match?.awayNationCode ?? null,
+        createdAt: r.createdAt.toISOString(),
+        pts: 3,
+      };
+    }),
+    ...myPollVotes.map((v) => ({
+      type: "poll_vote" as const,
+      id: v.id,
+      pollId: v.pollId,
+      optionValue: v.optionValue,
+      createdAt: v.createdAt.toISOString(),
+      pts: 5,
+    })),
+  ];
+
+  items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  res.json(items.slice(0, limit));
+});
+
 export default router;
+
