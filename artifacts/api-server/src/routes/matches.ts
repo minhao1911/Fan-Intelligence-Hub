@@ -261,7 +261,7 @@ router.post("/matches/:matchId/polls/:pollId/vote", requireAuth, async (req, res
     return;
   }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const existing = await db
@@ -356,7 +356,7 @@ router.post("/matches/:matchId/reactions", requireAuth, async (req, res): Promis
     return;
   }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [reaction] = await db.insert(reactionsTable).values({
@@ -429,7 +429,7 @@ router.post("/matches/:matchId/predict", requireAuth, async (req, res): Promise<
   const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
   const matchId = parseInt(raw, 10);
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const { predictedOutcome, predictedHomeScore, predictedAwayScore } = req.body;
@@ -493,7 +493,7 @@ router.get("/matches/:matchId/my-prediction", requireAuth, async (req, res): Pro
   const raw = Array.isArray(req.params.matchId) ? req.params.matchId[0] : req.params.matchId;
   const matchId = parseInt(raw, 10);
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [prediction] = await db

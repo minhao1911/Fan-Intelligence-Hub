@@ -7,7 +7,6 @@ import {
   ArrowUpCircle, CheckCheck
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useClerk, useUser, useAuth } from "@clerk/react";
 import { useGetMe, useListMatches, getListMatchesQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,14 +34,10 @@ type AppNotification = {
 };
 
 function useNotifications() {
-  const { getToken } = useAuth();
   return useQuery<AppNotification[]>({
     queryKey: ["me-notifications"],
     queryFn: async () => {
-      const token = await getToken();
-      const r = await fetch(`${getBaseUrl()}api/me/notifications?limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const r = await fetch(`${getBaseUrl()}api/me/notifications?limit=20`);
       if (!r.ok) return [];
       return r.json();
     },
@@ -52,14 +47,11 @@ function useNotifications() {
 }
 
 function useMarkAllRead() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const token = await getToken();
       await fetch(`${getBaseUrl()}api/me/notifications/read-all`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["me-notifications"] }),
@@ -67,14 +59,11 @@ function useMarkAllRead() {
 }
 
 function useMarkOneRead() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const token = await getToken();
       await fetch(`${getBaseUrl()}api/me/notifications/${id}/read`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["me-notifications"] }),
@@ -118,7 +107,6 @@ function NotificationBell() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 bg-card border-border p-0">
-        {/* Header */}
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/60">
           <span className="text-xs font-bold uppercase tracking-widest text-foreground">Notifications</span>
           {unreadCount > 0 && (
@@ -131,7 +119,6 @@ function NotificationBell() {
           )}
         </div>
 
-        {/* Notification list */}
         <div className="max-h-[340px] overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="py-8 text-center">
@@ -147,7 +134,6 @@ function NotificationBell() {
                   !n.isRead ? "bg-primary/4" : ""
                 }`}
               >
-                {/* Icon */}
                 <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                   n.type === "comment" ? "bg-sky-500/15" : "bg-primary/10"
                 }`}>
@@ -156,7 +142,6 @@ function NotificationBell() {
                     : <ArrowUpCircle className="h-3 w-3 text-primary" />}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-xs font-semibold leading-snug ${n.isRead ? "text-muted-foreground" : "text-foreground"}`}>
                     {n.title}
@@ -164,7 +149,6 @@ function NotificationBell() {
                   <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-snug">{n.body}</p>
                 </div>
 
-                {/* Meta */}
                 <div className="shrink-0 flex flex-col items-end gap-1">
                   <span className="text-[10px] text-muted-foreground">{timeAgoShort(n.createdAt)}</span>
                   {!n.isRead && (
@@ -180,13 +164,15 @@ function NotificationBell() {
   );
 }
 
+function handleSignOut() {
+  window.location.href = "https://replit.com/logout";
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useMatchNotifications();
   const [location] = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const { theme, toggle: toggleTheme } = useTheme();
-  const { signOut } = useClerk();
-  const { user: clerkUser } = useUser();
   const { data: user } = useGetMe();
   const { data: liveMatches } = useListMatches(
     { status: "live", limit: 1 },
@@ -225,10 +211,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col">
       <Toaster />
 
-      {/* ── Top Navigation Bar ─────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border/60 flex items-center px-3 md:px-6 gap-3">
 
-        {/* Logo */}
         <Link href="/feed" className="flex items-center gap-2 shrink-0 mr-2">
           <img src="/fanverse-logo.png" alt="FanVerse" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-heading text-lg font-bold text-foreground uppercase tracking-wide hidden sm:block">
@@ -236,7 +220,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
 
-        {/* Primary nav — desktop */}
         <nav className="hidden lg:flex items-center gap-0.5 flex-1 h-full">
           {primaryNav.map((item) => {
             const isActive = location.startsWith(item.href);
@@ -250,13 +233,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {/* Active bottom indicator */}
                 {isActive && (
                   <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-primary" />
                 )}
                 <item.icon className="h-3.5 w-3.5 shrink-0" />
                 <span>{item.name}</span>
-                {/* Live dot badge */}
                 {"live" in item && item.live && (
                   <span className="relative flex h-1.5 w-1.5 ml-0.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -267,7 +248,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             );
           })}
 
-          {/* More dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-all">
@@ -287,12 +267,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </nav>
 
-        {/* Spacer on tablet */}
         <div className="flex-1 lg:hidden" />
 
-        {/* Right actions */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Search — md+ */}
           <div className="relative hidden md:block mr-1">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
             <input
@@ -326,21 +303,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </Button>
 
-          {/* Profile dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 ml-1 pl-2 pr-1 py-1 rounded-full hover:bg-muted/70 transition-colors">
                 <Avatar className="h-7 w-7 border border-border shrink-0">
-                  <AvatarImage src={user?.avatarUrl || clerkUser?.imageUrl || undefined} />
+                  <AvatarImage src={user?.avatarUrl || undefined} />
                   <AvatarFallback className="bg-muted text-muted-foreground font-heading text-[10px]">
                     {user?.username
                       ? user.username.substring(0, 2).toUpperCase()
-                      : clerkUser?.firstName && clerkUser?.lastName
-                      ? (clerkUser.firstName[0] + clerkUser.lastName[0]).toUpperCase()
-                      : clerkUser?.firstName
-                      ? clerkUser.firstName.substring(0, 2).toUpperCase()
-                      : clerkUser?.emailAddresses?.[0]?.emailAddress?.substring(0, 2).toUpperCase()
-                      ?? "ME"}
+                      : "ME"}
                   </AvatarFallback>
                 </Avatar>
                 {user && (
@@ -376,7 +347,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive cursor-pointer flex items-center gap-2"
-                onClick={() => signOut()}
+                onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4" /> Log out
               </DropdownMenuItem>
@@ -387,16 +358,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <LiveScoreTicker />
 
-      {/* ── Page content ───────────────────────────────────────── */}
       <main className={`flex-1 pb-20 lg:pb-6 transition-all duration-300 ${hasLive ? "pt-22" : "pt-14"}`}>
         <div className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-8 py-6 md:py-8">
           {children}
         </div>
       </main>
 
-      {/* ── Mobile bottom navigation ────────────────────────────── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/60 flex items-stretch h-16 safe-area-bottom">
-        {/* Left two: Home + Nations */}
         {mobileNavLeft.map((item) => {
           const isActive = location.startsWith(item.href);
           return (
@@ -416,7 +384,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           );
         })}
 
-        {/* Centre Search FAB */}
         <button
           onClick={() => setSearchOpen(true)}
           className="flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
@@ -427,7 +394,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span>Search</span>
         </button>
 
-        {/* Right three */}
         {mobileNavRight.map((item) => {
           const isActive = location.startsWith(item.href);
           return (
@@ -456,7 +422,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         })}
       </nav>
 
-      {/* Mobile search modal */}
       <MobileSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );

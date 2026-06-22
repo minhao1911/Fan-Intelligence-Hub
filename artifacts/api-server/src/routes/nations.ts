@@ -108,7 +108,7 @@ router.get("/nations/:code", async (req, res): Promise<void> => {
 
 router.post("/nations/:code/join", requireAuth, async (req, res): Promise<void> => {
   const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
 
   const [nation] = await db.select().from(nationsTable).where(eq(nationsTable.code, code));
   if (!nation) { res.status(404).json({ error: "Nation not found" }); return; }
@@ -157,7 +157,7 @@ router.post("/nations/:code/join", requireAuth, async (req, res): Promise<void> 
 
 router.post("/nations/:code/leave", requireAuth, async (req, res): Promise<void> => {
   const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
 
   const user = await getOrCreateUser(clerkId);
 
@@ -323,7 +323,7 @@ router.get("/nations/:code/confidence", async (req, res): Promise<void> => {
 
 router.post("/nations/:code/confidence", requireAuth, async (req, res): Promise<void> => {
   const code = (Array.isArray(req.params.code) ? req.params.code[0] : req.params.code).toUpperCase();
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const level = parseInt(req.body.level, 10);

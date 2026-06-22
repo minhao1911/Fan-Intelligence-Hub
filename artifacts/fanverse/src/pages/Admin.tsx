@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuth } from "@clerk/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBaseUrl } from "@/lib/api";
 import {
@@ -37,13 +36,10 @@ interface ResolveResult {
 }
 
 function useAdminMatches() {
-  const { getToken } = useAuth();
   return useQuery<AdminMatch[]>({
     queryKey: ["admin-matches"],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/admin/matches`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Failed to fetch matches");
       return r.json();
@@ -53,14 +49,12 @@ function useAdminMatches() {
 }
 
 function useUpdateStatus() {
-  const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ matchId, status }: { matchId: number; status: "upcoming" | "live" }) => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/admin/matches/${matchId}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       if (!r.ok) {
@@ -74,14 +68,11 @@ function useUpdateStatus() {
 }
 
 function useReseed() {
-  const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/admin/reseed`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
@@ -97,16 +88,14 @@ function useReseed() {
 }
 
 function useResolveMatch() {
-  const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
       matchId, homeScore, awayScore,
     }: { matchId: number; homeScore: number; awayScore: number }): Promise<ResolveResult> => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/admin/matches/${matchId}/resolve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ homeScore, awayScore }),
       });
       if (!r.ok) {

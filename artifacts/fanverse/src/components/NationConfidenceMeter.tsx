@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@clerk/react";
+import { useGetMe } from "@workspace/api-client-react";
 import {
   useGetNationConfidence,
   useVoteNationConfidence,
@@ -41,7 +41,7 @@ interface Props {
 
 export function NationConfidenceMeter({ nationCode, nationName, flagEmoji, isMember }: Props) {
   const queryClient = useQueryClient();
-  const { user: clerkUser } = useUser();
+  const { data: me } = useGetMe();
 
   const { data, isLoading } = useGetNationConfidence(nationCode, {
     query: {
@@ -58,7 +58,7 @@ export function NationConfidenceMeter({ nationCode, nationName, flagEmoji, isMem
   });
 
   const handleVote = (level: number) => {
-    if (!clerkUser || !isMember || vote.isPending) return;
+    if (!me || !isMember || vote.isPending) return;
     vote.mutate({ code: nationCode, data: { level } });
   };
 
@@ -70,7 +70,7 @@ export function NationConfidenceMeter({ nationCode, nationName, flagEmoji, isMem
 
   const { overallConfidence, totalVotes, myVote, breakdown } = data;
   const barColor = confidenceColor(overallConfidence);
-  const isFirstVote = myVote === null && clerkUser && isMember;
+  const isFirstVote = myVote === null && me && isMember;
 
   return (
     <Card className="bg-card border-border overflow-hidden">
@@ -140,7 +140,7 @@ export function NationConfidenceMeter({ nationCode, nationName, flagEmoji, isMem
 
         {/* Vote buttons */}
         <div className="pt-1 space-y-2">
-          {isMember && clerkUser ? (
+          {isMember && me ? (
             <>
               <p className="text-xs text-muted-foreground font-medium">
                 {myVote ? "Update your vote:" : "Cast your confidence vote:"}
@@ -178,7 +178,7 @@ export function NationConfidenceMeter({ nationCode, nationName, flagEmoji, isMem
             </>
           ) : (
             <p className="text-xs text-center text-muted-foreground py-1">
-              {clerkUser ? "Join this group to cast a confidence vote." : "Sign in and join to vote."}
+              {me ? "Join this group to cast a confidence vote." : "Sign in and join to vote."}
             </p>
           )}
         </div>

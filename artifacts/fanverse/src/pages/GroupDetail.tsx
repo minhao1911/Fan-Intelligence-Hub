@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, Link } from "wouter";
-import { useUser } from "@clerk/react";
+import { useGetMe } from "@workspace/api-client-react";
 import {
   useGetGroup,
   useJoinGroup,
@@ -41,7 +41,7 @@ function timeAgo(iso: string): string {
 export default function GroupDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const { user: clerkUser } = useUser();
+  const { data: me } = useGetMe();
   const groupId = parseInt(id as string, 10);
 
   const [postText, setPostText] = useState("");
@@ -195,14 +195,14 @@ export default function GroupDetail() {
         </h2>
 
         {/* Composer — only for members */}
-        {(isMember || isAdmin) && clerkUser ? (
+        {(isMember || isAdmin) && me ? (
           <Card className="bg-card border-border mb-4">
             <CardContent className="p-4">
               <div className="flex gap-3">
                 <Avatar className="h-9 w-9 border border-border shrink-0 mt-0.5">
-                  <AvatarImage src={clerkUser.imageUrl} />
+                  <AvatarImage src={me?.avatarUrl ?? undefined} />
                   <AvatarFallback className="bg-muted text-muted-foreground font-heading text-xs">
-                    {(clerkUser.username ?? clerkUser.firstName ?? "U").substring(0, 2).toUpperCase()}
+                    {(me?.username ?? "ME").substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
@@ -231,7 +231,7 @@ export default function GroupDetail() {
               </div>
             </CardContent>
           </Card>
-        ) : !clerkUser ? (
+        ) : !me ? (
           <Card className="bg-card border-border border-dashed mb-4">
             <CardContent className="p-6 text-center text-muted-foreground text-sm">
               Sign in and join the group to post on the wall.
@@ -260,7 +260,7 @@ export default function GroupDetail() {
           <div className="space-y-3">
             {posts.map((post) => {
               const canDelete =
-                isAdmin || post.author.id === (group.members.find((m) => m.username === clerkUser?.username)?.id);
+                isAdmin || post.author.id === (group.members.find((m) => m.username === me?.username)?.id);
               return (
                 <Card key={post.id} className="bg-card border-border">
                   <CardContent className="p-4">

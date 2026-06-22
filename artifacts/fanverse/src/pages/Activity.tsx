@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { getBaseUrl } from "@/lib/api";
@@ -26,13 +25,10 @@ type ActivityItem = {
 };
 
 function useMyActivity(limit = 50) {
-  const { getToken } = useAuth();
   return useQuery<ActivityItem[]>({
     queryKey: ["me-activity", limit],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/me/activity?limit=${limit}`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Failed to fetch activity");
       return r.json();

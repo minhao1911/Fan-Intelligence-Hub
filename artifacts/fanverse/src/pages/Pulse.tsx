@@ -3,7 +3,6 @@ import { useListNations, useGetNationConfidence, useVoteNationConfidence } from 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, Globe, Users, TrendingUp, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@clerk/react";
 import { getBaseUrl } from "@/lib/api";
 
 const LEVELS = [
@@ -114,7 +113,6 @@ function NationVotePanel({ code, onVoted }: { code: string; onVoted: () => void 
 function ConfidenceWarsTab() {
   const { data: nations, isLoading } = useListNations({});
   const [expanded, setExpanded] = useState<string | null>(null);
-  const { isSignedIn } = useAuth();
   const qc = useQueryClient();
 
   const sorted = nations
@@ -178,7 +176,7 @@ function ConfidenceWarsTab() {
                     )}
                   </div>
                 </div>
-                {isOpen && isSignedIn && (
+                {isOpen && (
                   <div className="px-4 pb-4">
                     <NationVotePanel
                       code={nation.code}
@@ -186,11 +184,7 @@ function ConfidenceWarsTab() {
                     />
                   </div>
                 )}
-                {isOpen && !isSignedIn && (
-                  <div className="px-4 pb-4 pt-2 border-t border-border/50 text-center text-sm text-muted-foreground">
-                    Sign in to cast your confidence vote
-                  </div>
-                )}
+                
               </div>
             );
           })}
@@ -199,7 +193,6 @@ function ConfidenceWarsTab() {
 }
 
 function MyStancesTab() {
-  const { isSignedIn, getToken } = useAuth();
 
   const { data: myVotes, isLoading } = useQuery<
     {
@@ -216,17 +209,15 @@ function MyStancesTab() {
   >({
     queryKey: ["me-confidence-votes"],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/me/confidence-votes`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Failed to fetch confidence votes");
       return r.json();
     },
-    enabled: isSignedIn === true,
+    enabled: true,
   });
 
-  if (!isSignedIn) {
+  if (false) {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <Globe className="w-10 h-10 mx-auto mb-3 opacity-30" />

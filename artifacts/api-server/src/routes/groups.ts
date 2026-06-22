@@ -41,7 +41,7 @@ router.get("/groups", async (req, res): Promise<void> => {
 });
 
 router.post("/groups", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const { name, description, coverEmoji, nationCode, isPublic } = req.body;
@@ -121,7 +121,7 @@ router.post("/groups/:id/join", requireAuth, async (req, res): Promise<void> => 
   const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid group id" }); return; }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [group] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
@@ -151,7 +151,7 @@ router.post("/groups/:id/leave", requireAuth, async (req, res): Promise<void> =>
   const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid group id" }); return; }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [existing] = await db
@@ -232,7 +232,7 @@ router.post("/groups/:id/posts", requireAuth, async (req, res): Promise<void> =>
   const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid group id" }); return; }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [group] = await db.select().from(groupsTable).where(eq(groupsTable.id, id));
@@ -275,7 +275,7 @@ router.delete("/groups/:id/posts/:postId", requireAuth, async (req, res): Promis
   const postId = parseInt(req.params.postId as string, 10);
   if (isNaN(id) || isNaN(postId)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [post] = await db.select().from(groupPostsTable).where(eq(groupPostsTable.id, postId));

@@ -1,16 +1,16 @@
 import type { Request, Response, NextFunction } from "express";
 import { eq, and, sql } from "drizzle-orm";
-import { db, founderPassesTable, subscriptionsTable, usersTable } from "@workspace/db";
+import { db, founderPassesTable, subscriptionsTable } from "@workspace/db";
 import { getOrCreateUser } from "../lib/userHelpers";
 
 export async function requirePremium(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const clerkUserId: string | undefined = (req as any).clerkUserId;
-  if (!clerkUserId) {
+  const replitUserId: string | undefined = (req as any).replitUserId;
+  if (!replitUserId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
-  const user = await getOrCreateUser(clerkUserId);
+  const user = await getOrCreateUser(replitUserId);
 
   const [founderPass] = await db
     .select()

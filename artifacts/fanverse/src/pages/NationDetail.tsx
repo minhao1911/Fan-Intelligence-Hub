@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
 import { ArrowLeft, Users, Shield, TrendingUp, TrendingDown, Minus, Star, Lock, Zap } from "lucide-react";
-import { useAuth } from "@clerk/react";
 import { getBaseUrl } from "@/lib/api";
 
 export default function NationDetail() {
@@ -15,14 +14,11 @@ export default function NationDetail() {
   const { data: nation, isLoading } = useGetNation(code as string, {
     query: { enabled: !!code, queryKey: getGetNationQueryKey(code as string) },
   });
-  const { getToken, isSignedIn } = useAuth();
   const { data: pulse, error: pulseError } = useQuery({
     queryKey: ["nation-pulse", code],
-    enabled: !!code && isSignedIn === true,
+    enabled: !!code,
     queryFn: async () => {
-      const token = await getToken();
       const res = await fetch(`${getBaseUrl()}api/nations/${code}/pulse`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 402) {
         const err = new Error("premium_required");
@@ -259,7 +255,7 @@ export default function NationDetail() {
                 </>
               ) : (
                 <div className="text-center py-6 text-muted-foreground text-sm">
-                  {isSignedIn ? "Gathering pulse data..." : "Sign in to view pulse analytics"}
+                  "Gathering pulse data..."
                 </div>
               )}
             </CardContent>

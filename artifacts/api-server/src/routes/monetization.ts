@@ -22,7 +22,7 @@ const FOUNDER_PASS_LIMIT = 1000;
 
 // ── GET current user's entitlements ──────────────────────────────────────────
 router.get("/monetization/me", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
 
   const [founderPass] = await db
     .select()
@@ -59,7 +59,7 @@ router.get("/monetization/me", requireAuth, async (req, res): Promise<void> => {
 
 // ── Founder Pass: create order ────────────────────────────────────────────────
 router.post("/monetization/founder-pass/order", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
 
   const [existing] = await db
     .select()
@@ -99,7 +99,7 @@ router.post("/monetization/founder-pass/order", requireAuth, async (req, res): P
 
 // ── Founder Pass: verify payment ──────────────────────────────────────────────
 router.post("/monetization/founder-pass/verify", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const { orderId, paymentId, signature } = req.body;
 
   if (!orderId || !paymentId || !signature) {
@@ -139,7 +139,7 @@ router.post("/monetization/founder-pass/verify", requireAuth, async (req, res): 
 
 // ── Premium Subscription: create order ───────────────────────────────────────
 router.post("/monetization/subscription/order", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const now = new Date();
 
   const [activeSub] = await db
@@ -180,7 +180,7 @@ router.post("/monetization/subscription/order", requireAuth, async (req, res): P
 
 // ── Premium Subscription: verify payment ─────────────────────────────────────
 router.post("/monetization/subscription/verify", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const { orderId, paymentId, signature } = req.body;
 
   if (!orderId || !paymentId || !signature) {
@@ -219,7 +219,7 @@ router.post("/monetization/subscription/verify", requireAuth, async (req, res): 
 
 // ── Premium Subscription: cancel ─────────────────────────────────────────────
 router.post("/monetization/subscription/cancel", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const now = new Date();
 
   const [activeSub] = await db
@@ -260,7 +260,7 @@ router.get("/monetization/products", requireAuth, async (req, res): Promise<void
 
 // ── Cosmetic: create order ────────────────────────────────────────────────────
 router.post("/monetization/cosmetic/order", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const { productId } = req.body;
 
   if (!productId) {
@@ -310,7 +310,7 @@ router.post("/monetization/cosmetic/order", requireAuth, async (req, res): Promi
 
 // ── Cosmetic: verify payment ──────────────────────────────────────────────────
 router.post("/monetization/cosmetic/verify", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const { orderId, paymentId, signature } = req.body;
 
   if (!orderId || !paymentId || !signature) {
@@ -358,7 +358,7 @@ router.post("/monetization/cosmetic/verify", requireAuth, async (req, res): Prom
 
 // ── Cosmetic: equip/unequip ───────────────────────────────────────────────────
 router.patch("/monetization/cosmetic/:productId/equip", requireAuth, async (req, res): Promise<void> => {
-  const user = await getOrCreateUser((req as any).clerkUserId);
+  const user = await getOrCreateUser((req as any).replitUserId);
   const productId = parseInt(req.params.productId as string, 10);
   const { equip } = req.body;
 

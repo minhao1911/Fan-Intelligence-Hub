@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/react";
 import { fireMatchLiveToast, firePredictionCorrectToast } from "@/components/matchToasts";
 
 interface PredictionSnapshot {
@@ -26,17 +25,11 @@ function getBaseUrl() {
 }
 
 export function useMatchNotifications() {
-  const { getToken, isSignedIn } = useAuth();
-
-  // ── Track which match IDs we've already seen as live ───────────────────────
   const seenLiveRef = useRef<Set<number>>(new Set());
   const liveInitRef = useRef(false);
-
-  // ── Track per-prediction state ──────────────────────────────────────────────
   const prevPredRef = useRef<Map<number, PredictionSnapshot>>(new Map());
   const predInitRef = useRef(false);
 
-  // ── Poll general live matches (no auth needed) ─────────────────────────────
   const pollLiveMatches = useCallback(async () => {
     try {
       const res = await fetch(`${getBaseUrl()}api/matches?status=live&limit=20`);
@@ -56,18 +49,13 @@ export function useMatchNotifications() {
         }
       }
     } catch {
-      // Silently fail — non-critical
+      // Silently fail
     }
   }, []);
 
-  // ── Poll user predictions (auth required) ──────────────────────────────────
   const pollPredictions = useCallback(async () => {
-    if (!isSignedIn) return;
     try {
-      const token = await getToken();
-      const res = await fetch(`${getBaseUrl()}api/me/predictions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${getBaseUrl()}api/me/predictions`);
       if (!res.ok) return;
 
       const predictions: Array<{
@@ -93,7 +81,6 @@ export function useMatchNotifications() {
         const existing = prev.get(matchId);
 
         if (!isFirstLoad && existing) {
-          // Prediction just got resolved
           if (!existing.isResolved && isResolved) {
             const baseXp = 5;
             const bonus = xpEarned - baseXp;
@@ -115,9 +102,8 @@ export function useMatchNotifications() {
     } catch {
       // Silently fail
     }
-  }, [getToken, isSignedIn]);
+  }, []);
 
-  // ── Start polling ──────────────────────────────────────────────────────────
   useEffect(() => {
     pollLiveMatches();
     const interval = setInterval(pollLiveMatches, 30_000);
@@ -125,9 +111,8 @@ export function useMatchNotifications() {
   }, [pollLiveMatches]);
 
   useEffect(() => {
-    if (!isSignedIn) return;
     pollPredictions();
     const interval = setInterval(pollPredictions, 45_000);
     return () => clearInterval(interval);
-  }, [isSignedIn, pollPredictions]);
+  }, [pollPredictions]);
 }

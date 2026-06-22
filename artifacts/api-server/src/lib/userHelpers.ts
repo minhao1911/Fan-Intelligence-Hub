@@ -17,13 +17,13 @@ export function getReputationTier(points: number): string {
   return "Casual";
 }
 
-export async function getOrCreateUser(clerkId: string, username?: string, avatarUrl?: string) {
-  const existing = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId)).limit(1);
+export async function getOrCreateUser(replitId: string, username?: string, avatarUrl?: string) {
+  const existing = await db.select().from(usersTable).where(eq(usersTable.clerkId, replitId)).limit(1);
   if (existing[0]) return existing[0];
 
   const [newUser] = await db.insert(usersTable).values({
-    clerkId,
-    username: username || `fan_${clerkId.slice(-6)}`,
+    clerkId: replitId,
+    username: username || `fan_${replitId.slice(-6)}`,
     avatarUrl: avatarUrl || null,
   }).returning();
   return newUser;

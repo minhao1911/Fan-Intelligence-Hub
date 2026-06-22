@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuth } from "@clerk/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -94,13 +93,10 @@ function useUpcomingMatches() {
 }
 
 function useMyPrediction(matchId: number) {
-  const { getToken } = useAuth();
   return useQuery<MyPrediction | null>({
     queryKey: ["my-prediction", matchId],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/my-prediction`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (r.status === 404) return null;
       if (!r.ok) throw new Error("Failed");
@@ -123,14 +119,12 @@ function usePredictionSummary(matchId: number) {
 }
 
 function useSubmitPrediction(matchId: number) {
-  const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: { predictedOutcome: Outcome; predictedHomeScore?: number; predictedAwayScore?: number }) => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/predict`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!r.ok) throw new Error("Failed");
@@ -145,13 +139,10 @@ function useSubmitPrediction(matchId: number) {
 }
 
 function usePredictionHistory() {
-  const { getToken } = useAuth();
   return useQuery<PredictionHistoryEntry[]>({
     queryKey: ["my-predictions-history"],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/me/predictions`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Failed");
       return r.json();

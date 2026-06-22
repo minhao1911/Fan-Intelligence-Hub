@@ -7,7 +7,7 @@ import {
   userCosmeticsTable, productsTable, discussionsTable, commentsTable,
   reactionsTable, pollVotesTable, notificationsTable,
 } from "@workspace/db";
-import { getAuth } from "@clerk/express";
+
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 import { UpdateMeBody } from "@workspace/api-zod";
@@ -15,8 +15,7 @@ import { UpdateMeBody } from "@workspace/api-zod";
 const router: IRouter = Router();
 
 router.get("/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
-  const auth = getAuth(req);
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   let nationName: string | null = null;
@@ -70,7 +69,7 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/me/check-username", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const username = typeof req.query.username === "string" ? req.query.username.trim() : "";
 
   if (!username || username.length < 2 || username.length > 40) {
@@ -89,7 +88,7 @@ router.get("/me/check-username", requireAuth, async (req, res): Promise<void> =>
 });
 
 router.put("/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const parsed = UpdateMeBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -182,7 +181,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
 });
 
 router.get("/me/predictions", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const predictions = await db
@@ -226,7 +225,7 @@ router.get("/me/predictions", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/me/confidence-votes", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const XP_REWARDS: Record<number, number> = { 5: 50, 4: 25, 3: 5, 2: 0, 1: 0 };
@@ -265,7 +264,7 @@ router.get("/me/confidence-votes", requireAuth, async (req, res): Promise<void> 
 });
 
 router.get("/me/activity", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
   const limit = Math.min(parseInt(String(req.query.limit ?? "50"), 10) || 50, 100);
 
@@ -385,7 +384,7 @@ router.get("/me/activity", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/me/notifications", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
   const limit = Math.min(parseInt(String(req.query.limit ?? "30"), 10) || 30, 100);
 
@@ -409,7 +408,7 @@ router.get("/me/notifications", requireAuth, async (req, res): Promise<void> => 
 });
 
 router.post("/me/notifications/read-all", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   await db
@@ -421,7 +420,7 @@ router.post("/me/notifications/read-all", requireAuth, async (req, res): Promise
 });
 
 router.post("/me/notifications/:id/read", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
   const notifId = parseInt(String(req.params.id), 10);
 

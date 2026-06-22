@@ -89,7 +89,7 @@ router.post("/discussions", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [discussion] = await db.insert(discussionsTable).values({
@@ -166,7 +166,7 @@ router.post("/discussions/:id/comments", requireAuth, async (req, res): Promise<
     return;
   }
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [comment] = await db.insert(commentsTable).values({
@@ -218,7 +218,7 @@ router.post("/discussions/:id/upvote", requireAuth, async (req, res): Promise<vo
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
 
-  const clerkId = (req as any).clerkUserId;
+  const clerkId = (req as any).replitUserId;
   const user = await getOrCreateUser(clerkId);
 
   const [existing] = await db

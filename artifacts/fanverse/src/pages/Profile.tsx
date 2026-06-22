@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useGetMe, useUpdateMe, getGetMeQueryKey } from "@workspace/api-client-react";
-import { useAuth } from "@clerk/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,13 +56,10 @@ interface PredictionEntry {
 }
 
 function useMyPredictions() {
-  const { getToken } = useAuth();
   return useQuery<PredictionEntry[]>({
     queryKey: ["me-predictions"],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/me/predictions`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Failed to fetch predictions");
       return r.json();
@@ -350,7 +346,6 @@ function AllegianceSection({ nationCode, nationName }: { nationCode: string | nu
 type UsernameStatus = "idle" | "same" | "checking" | "available" | "taken" | "invalid";
 
 function useUsernameAvailability(username: string, currentUsername: string | undefined) {
-  const { getToken } = useAuth();
   const [status, setStatus] = useState<UsernameStatus>("idle");
   const [reason, setReason] = useState<string | null>(null);
 
@@ -369,9 +364,7 @@ function useUsernameAvailability(username: string, currentUsername: string | und
     setStatus("checking");
     const timer = setTimeout(async () => {
       try {
-        const token = await getToken();
         const res = await fetch(`${getBaseUrl()}api/me/check-username?username=${encodeURIComponent(trimmed)}`, {
-          headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json();
         setStatus(json.available ? "available" : "taken");

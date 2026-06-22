@@ -22,7 +22,7 @@ args = "Start application"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "FanVerse Mobile"
+args = "API Server"
 
 [[workflows.workflow]]
 name = "Start application"
@@ -37,16 +37,16 @@ args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/fanverse run dev"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "FanVerse Mobile"
+name = "API Server"
 author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "CI=1 pnpm --filter @workspace/fanverse-mobile run dev"
-waitForPort = 5173
+args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
+waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
@@ -70,11 +70,7 @@ externalPort = 5173
 
 [[ports]]
 localPort = 8080
-externalPort = 80
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
+externalPort = 8080
 
 [[ports]]
 localPort = 8082
@@ -98,7 +94,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-VITE_CLERK_PUBLISHABLE_KEY = "pk_test_cHJlc2VudC1waXBlZmlzaC0xNy5jbGVyay5hY2NvdW50cy5kZXYk"
-VITE_CLERK_PROXY_URL = "/api/__clerk"
-CLERK_PUBLISHABLE_KEY = "pk_test_cHJlc2VudC1waXBlZmlzaC0xNy5jbGVyay5hY2NvdW50cy5kZXYk"
-EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_cHJlc2VudC1waXBlZmlzaC0xNy5jbGVyay5hY2NvdW50cy5kZXYk"

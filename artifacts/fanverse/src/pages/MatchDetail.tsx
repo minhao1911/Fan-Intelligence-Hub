@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useAuth } from "@clerk/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useGetMatch,
@@ -65,13 +64,10 @@ interface PredictionSummary {
 }
 
 function useMyPrediction(matchId: number) {
-  const { getToken } = useAuth();
   return useQuery<MyPrediction | null>({
     queryKey: ["my-prediction", matchId],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/my-prediction`, {
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (r.status === 404) return null;
       if (!r.ok) throw new Error("Failed");
@@ -95,14 +91,12 @@ function usePredictionSummary(matchId: number) {
 }
 
 function useSubmitPrediction(matchId: number) {
-  const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: { predictedOutcome: Outcome; predictedHomeScore?: number; predictedAwayScore?: number }) => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/matches/${matchId}/predict`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!r.ok) throw new Error("Failed");
@@ -130,7 +124,6 @@ function ScorePredictionCard({
   awayNationName: string;
   matchStatus: string;
 }) {
-  const { isSignedIn } = useAuth();
   const { data: myPrediction, isLoading: loadingMine } = useMyPrediction(matchId);
   const { data: summary } = usePredictionSummary(matchId);
   const submit = useSubmitPrediction(matchId);
@@ -170,14 +163,7 @@ function ScorePredictionCard({
       </CardHeader>
 
       <CardContent className="p-5 space-y-4">
-        {!isSignedIn ? (
-          <div className="text-center py-4 space-y-3">
-            <p className="text-sm text-muted-foreground">Sign in to submit your score prediction</p>
-            <Button size="sm" variant="outline" className="font-heading uppercase tracking-widest text-xs" asChild>
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
-          </div>
-        ) : loadingMine ? (
+        {loadingMine ? (
           <div className="h-24 bg-muted/40 rounded-xl animate-pulse" />
         ) : hasPredicted ? (
           <div className="space-y-2">

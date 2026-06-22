@@ -11,7 +11,6 @@ import {
   CheckCircle2, Crosshair, ChevronRight,
 } from "lucide-react";
 import type { LeaderboardEntry } from "@workspace/api-client-react";
-import { useAuth } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
 import { getBaseUrl } from "@/lib/api";
 
@@ -50,13 +49,11 @@ type PredictionEntry = {
 };
 
 function usePredictionLeaderboard() {
-  const { getToken } = useAuth();
   return useQuery<PredictionEntry[]>({
     queryKey: ["stats-prediction-leaderboard"],
     queryFn: async () => {
-      const token = await getToken();
       const r = await fetch(`${getBaseUrl()}api/stats/prediction-leaderboard`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        
       });
       if (!r.ok) throw new Error("Failed to load prediction leaderboard");
       return r.json();
