@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
-import { db, discussionsTable, commentsTable, discussionUpvotesTable, usersTable } from "@workspace/db";
+import { db, discussionsTable, commentsTable, discussionUpvotesTable, usersTable, notificationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { getOrCreateUser, getReputationTier } from "../lib/userHelpers";
 import { CreateDiscussionBody, AddCommentBody } from "@workspace/api-zod";
@@ -175,15 +175,30 @@ router.post("/discussions/:id/comments", requireAuth, async (req, res): Promise<
     content: parsed.data.content,
   }).returning();
 
-  await db
-    .update(discussionsTable)
-    .set({ commentCount: sql`${discussionsTable.commentCount} + 1` })
+  const [discussion] = await db
+    .select({ userId: discussionsTable.userId, title: discussionsTable.title })
+    .from(discussionsTable)
     .where(eq(discussionsTable.id, id));
 
-  await db
-    .update(usersTable)
-    .set({ reputationPoints: sql`${usersTable.reputationPoints} + 2` })
-    .where(eq(usersTable.id, user.id));
+  await Promise.all([
+    db.update(discussionsTable)
+      .set({ commentCount: sql`${discussionsTable.commentCount} + 1` })
+      .where(eq(discussionsTable.id, id)),
+    db.update(usersTable)
+      .set({ reputationPoints: sql`${usersTable.reputationPoints} + 2` })
+      .where(eq(usersTable.id, user.id)),
+    // Notify thread author (skip if commenting on own thread)
+    discussion && discussion.userId !== user.id
+      ? db.insert(notificationsTable).values({
+          userId: discussion.userId,
+          type: "comment",
+          title: "New reply on your thread",
+          body: `${user.username} replied: "${parsed.data.content.slice(0, 80)}${parsed.data.content.length > 80 ? "…" : ""}"`,
+          discussionId: id,
+          actorUsername: user.username,
+        })
+      : Promise.resolve(),
+  ]);
 
   res.status(201).json({
     id: comment.id,
@@ -212,11 +227,28 @@ router.post("/discussions/:id/upvote", requireAuth, async (req, res): Promise<vo
     .where(and(eq(discussionUpvotesTable.discussionId, id), eq(discussionUpvotesTable.userId, user.id)));
 
   if (!existing) {
-    await db.insert(discussionUpvotesTable).values({ discussionId: id, userId: user.id });
-    await db
-      .update(discussionsTable)
-      .set({ upvotes: sql`${discussionsTable.upvotes} + 1` })
+    const [discussion] = await db
+      .select({ userId: discussionsTable.userId, title: discussionsTable.title })
+      .from(discussionsTable)
       .where(eq(discussionsTable.id, id));
+
+    await Promise.all([
+      db.insert(discussionUpvotesTable).values({ discussionId: id, userId: user.id }),
+      db.update(discussionsTable)
+        .set({ upvotes: sql`${discussionsTable.upvotes} + 1` })
+        .where(eq(discussionsTable.id, id)),
+      // Notify thread author (skip if upvoting own thread)
+      discussion && discussion.userId !== user.id
+        ? db.insert(notificationsTable).values({
+            userId: discussion.userId,
+            type: "upvote",
+            title: "Someone upvoted your thread",
+            body: `${user.username} upvoted "${discussion.title.slice(0, 60)}${discussion.title.length > 60 ? "…" : ""}"`,
+            discussionId: id,
+            actorUsername: user.username,
+          })
+        : Promise.resolve(),
+    ]);
   }
 
   const [discussion] = await db.select().from(discussionsTable).where(eq(discussionsTable.id, id));

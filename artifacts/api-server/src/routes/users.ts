@@ -5,7 +5,7 @@ import {
   db, usersTable, nationsTable, matchPredictionsTable, matchesTable,
   nationConfidenceVotesTable, founderPassesTable, subscriptionsTable,
   userCosmeticsTable, productsTable, discussionsTable, commentsTable,
-  reactionsTable, pollVotesTable,
+  reactionsTable, pollVotesTable, notificationsTable,
 } from "@workspace/db";
 import { getAuth } from "@clerk/express";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -382,6 +382,55 @@ router.get("/me/activity", requireAuth, async (req, res): Promise<void> => {
 
   items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   res.json(items.slice(0, limit));
+});
+
+router.get("/me/notifications", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+  const limit = Math.min(parseInt(String(req.query.limit ?? "30"), 10) || 30, 100);
+
+  const notifications = await db
+    .select()
+    .from(notificationsTable)
+    .where(eq(notificationsTable.userId, user.id))
+    .orderBy(desc(notificationsTable.createdAt))
+    .limit(limit);
+
+  res.json(notifications.map((n) => ({
+    id: n.id,
+    type: n.type,
+    title: n.title,
+    body: n.body,
+    isRead: n.isRead,
+    discussionId: n.discussionId,
+    actorUsername: n.actorUsername,
+    createdAt: n.createdAt.toISOString(),
+  })));
+});
+
+router.post("/me/notifications/read-all", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+
+  await db
+    .update(notificationsTable)
+    .set({ isRead: true })
+    .where(eq(notificationsTable.userId, user.id));
+
+  res.json({ ok: true });
+});
+
+router.post("/me/notifications/:id/read", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = (req as any).clerkUserId;
+  const user = await getOrCreateUser(clerkId);
+  const notifId = parseInt(String(req.params.id), 10);
+
+  await db
+    .update(notificationsTable)
+    .set({ isRead: true })
+    .where(and(eq(notificationsTable.id, notifId), eq(notificationsTable.userId, user.id)));
+
+  res.json({ ok: true });
 });
 
 export default router;
