@@ -14,8 +14,13 @@ import { UpdateMeBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).replitUserId;
+router.get("/me", async (req, res): Promise<void> => {
+  const replitId = (req as any).replitUser?.id;
+  if (!replitId) {
+    res.json(null);
+    return;
+  }
+  const clerkId = String(replitId);
   const user = await getOrCreateUser(clerkId);
 
   let nationName: string | null = null;

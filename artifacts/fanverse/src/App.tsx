@@ -36,8 +36,7 @@ function AuthenticatedApp() {
   if (isLoading) return null;
 
   if (!user) {
-    window.location.href = "https://replit.com/login";
-    return null;
+    return <Redirect to="/" />;
   }
 
   return (
