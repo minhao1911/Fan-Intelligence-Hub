@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and, ne, inArray, sql } from "drizzle-orm";
+import { withCache, cacheDel, cacheDelPrefix, TTL } from "../lib/cache";
 import {
   db, usersTable, nationsTable, matchPredictionsTable, matchesTable,
   nationConfidenceVotesTable, founderPassesTable, subscriptionsTable,
@@ -126,52 +127,55 @@ router.put("/me", requireAuth, async (req, res): Promise<void> => {
 router.get("/leaderboard", async (req, res): Promise<void> => {
   const limit = Math.min(parseInt(String(req.query.limit ?? "20"), 10) || 20, 100);
   const nationCode = typeof req.query.nationCode === "string" ? req.query.nationCode : undefined;
+  const cacheKey = `leaderboard:${nationCode ?? "all"}:${limit}`;
 
-  const users = await db
-    .select()
-    .from(usersTable)
-    .where(nationCode ? eq(usersTable.nationCode, nationCode) : undefined)
-    .orderBy(desc(usersTable.reputationPoints))
-    .limit(limit);
+  const leaderboard = await withCache(cacheKey, TTL.LEADERBOARD, async () => {
+    const users = await db
+      .select()
+      .from(usersTable)
+      .where(nationCode ? eq(usersTable.nationCode, nationCode) : undefined)
+      .orderBy(desc(usersTable.reputationPoints))
+      .limit(limit);
 
-  const userIds = users.map((u) => u.id);
-  if (userIds.length === 0) { res.json([]); return; }
+    const userIds = users.map((u) => u.id);
+    if (userIds.length === 0) return [];
 
-  const [founderPasses, activeSubs] = await Promise.all([
-    db.select({ userId: founderPassesTable.userId, founderNumber: founderPassesTable.founderNumber })
-      .from(founderPassesTable)
-      .where(inArray(founderPassesTable.userId, userIds)),
-    db.select({ userId: subscriptionsTable.userId })
-      .from(subscriptionsTable)
-      .where(
-        and(
-          inArray(subscriptionsTable.userId, userIds),
-          eq(subscriptionsTable.status, "active"),
-          sql`${subscriptionsTable.expiryDate} > ${new Date()}`,
+    const [founderPasses, activeSubs] = await Promise.all([
+      db.select({ userId: founderPassesTable.userId, founderNumber: founderPassesTable.founderNumber })
+        .from(founderPassesTable)
+        .where(inArray(founderPassesTable.userId, userIds)),
+      db.select({ userId: subscriptionsTable.userId })
+        .from(subscriptionsTable)
+        .where(
+          and(
+            inArray(subscriptionsTable.userId, userIds),
+            eq(subscriptionsTable.status, "active"),
+            sql`${subscriptionsTable.expiryDate} > ${new Date()}`,
+          ),
         ),
-      ),
-  ]);
+    ]);
 
-  const founderMap = new Map(founderPasses.map((f) => [f.userId, f.founderNumber]));
-  const premiumSet = new Set(activeSubs.map((s) => s.userId));
+    const founderMap = new Map(founderPasses.map((f) => [f.userId, f.founderNumber]));
+    const premiumSet = new Set(activeSubs.map((s) => s.userId));
 
-  const leaderboard = users.map((u, i) => ({
-    rank: i + 1,
-    user: {
-      id: u.id,
-      username: u.username,
-      avatarUrl: u.avatarUrl,
-      reputationPoints: u.reputationPoints,
-      reputationTier: getReputationTier(u.reputationPoints),
-      nationCode: u.nationCode,
-      isFounder: founderMap.has(u.id),
-      founderNumber: founderMap.get(u.id) ?? null,
-      isPremium: premiumSet.has(u.id),
-    },
-    totalVotes: u.totalVotes,
-    totalReactions: u.totalReactions,
-    predictionAccuracy: null,
-  }));
+    return users.map((u, i) => ({
+      rank: i + 1,
+      user: {
+        id: u.id,
+        username: u.username,
+        avatarUrl: u.avatarUrl,
+        reputationPoints: u.reputationPoints,
+        reputationTier: getReputationTier(u.reputationPoints),
+        nationCode: u.nationCode,
+        isFounder: founderMap.has(u.id),
+        founderNumber: founderMap.get(u.id) ?? null,
+        isPremium: premiumSet.has(u.id),
+      },
+      totalVotes: u.totalVotes,
+      totalReactions: u.totalReactions,
+      predictionAccuracy: null,
+    }));
+  });
 
   res.json(leaderboard);
 });
