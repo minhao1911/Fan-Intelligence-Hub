@@ -13,6 +13,7 @@ import {
 } from "@workspace/db";
 import { nations, generateMatchRows } from "@workspace/db/seed-data";
 import { requireAuth } from "../middlewares/requireAuth";
+import { syncDays, syncDate } from "../lib/isportsSync";
 
 const router = Router();
 
@@ -179,6 +180,25 @@ router.post("/admin/reseed", requireAuth, async (req, res): Promise<void> => {
     nationsCount: nations.length,
     matchesCount: matchRows.length,
   });
+});
+
+// ── iSports sync ─────────────────────────────────────────────────────────────
+
+// POST /admin/sync-isports          — sync today + next 2 days
+// POST /admin/sync-isports?date=... — sync a specific date
+router.post("/admin/sync-isports", requireAuth, async (req, res): Promise<void> => {
+  const { date } = req.query as { date?: string };
+  try {
+    if (date) {
+      const result = await syncDate(date);
+      res.json({ ok: true, results: [result] });
+    } else {
+      const results = await syncDays(3);
+      res.json({ ok: true, results });
+    }
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 export default router;

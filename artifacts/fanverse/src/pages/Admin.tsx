@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBaseUrl } from "@/lib/api";
 import {
   Shield, Zap, Clock, CheckCircle2, Radio, Trophy,
-  ChevronRight, AlertCircle, RefreshCw, Users, Database, TriangleAlert,
+  ChevronRight, AlertCircle, RefreshCw, Users, Database, TriangleAlert, Wifi,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -64,6 +64,23 @@ function useUpdateStatus() {
       return r.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-matches"] }),
+  });
+}
+
+function useISportsSync() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const r = await fetch(`${getBaseUrl()}api/admin/sync-isports`, { method: "POST" });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error ?? "Sync failed");
+      }
+      return r.json() as Promise<{ ok: boolean; results: Array<{ date: string; fetched: number; inserted: number; updated: number; skipped: number }> }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-matches"] });
+    },
   });
 }
 
@@ -344,6 +361,7 @@ export default function Admin() {
   const [confirmReseed, setConfirmReseed] = useState(false);
   const { data: matches = [], isLoading, error, refetch } = useAdminMatches();
   const reseed = useReseed();
+  const isportsSync = useISportsSync();
 
   const upcomingMatches = matches.filter((m) => m.status === "upcoming");
   const liveMatches = matches.filter((m) => m.status === "live");
@@ -500,6 +518,64 @@ export default function Admin() {
           Click "Go Live" → switch to Live tab → enter final score → "Resolve & Award XP"
         </p>
       )}
+
+      {/* iSports Sync section */}
+      <div className="rounded-xl border border-border/50 bg-card/60 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Wifi className="h-4 w-4 text-muted-foreground" />
+          <p className="text-xs font-heading font-bold uppercase tracking-widest text-muted-foreground">
+            Live Data Sync
+          </p>
+        </div>
+
+        {isportsSync.isSuccess ? (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-emerald-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Sync complete —{" "}
+              {isportsSync.data.results.map((r, i) => (
+                <span key={i} className="text-muted-foreground">
+                  {r.date}: {r.inserted} new, {r.updated} updated
+                </span>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs border-border/60 text-muted-foreground"
+              onClick={() => isportsSync.reset()}
+            >
+              Sync Again
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Pull today's real World Cup matches from iSports API (today + 2 days).
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 text-xs border-sky-500/40 text-sky-400 hover:bg-sky-500/10 hover:text-sky-300"
+              disabled={isportsSync.isPending}
+              onClick={() => isportsSync.mutate()}
+            >
+              {isportsSync.isPending ? (
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Wifi className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {isportsSync.isPending ? "Syncing…" : "Sync iSports"}
+            </Button>
+          </div>
+        )}
+        {isportsSync.isError && (
+          <p className="text-xs text-destructive flex items-center gap-1.5">
+            <AlertCircle className="h-3 w-3" />
+            {(isportsSync.error as Error).message}
+          </p>
+        )}
+      </div>
 
       {/* Reseed section */}
       <div className="rounded-xl border border-border/50 bg-card/60 p-4 space-y-3">

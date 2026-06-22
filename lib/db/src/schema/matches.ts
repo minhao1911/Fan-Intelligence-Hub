@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const matchesTable = pgTable("matches", {
   id: serial("id").primaryKey(),
+  externalId: text("external_id").unique(),
   homeNationCode: text("home_nation_code").notNull(),
   awayNationCode: text("away_nation_code").notNull(),
   competition: text("competition").notNull(),
