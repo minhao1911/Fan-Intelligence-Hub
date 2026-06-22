@@ -12,8 +12,13 @@ import router from "./routes";
 import fixturesRouter from "./routes/fixtures";
 import adminRouter from "./routes/admin";
 import { logger } from "./lib/logger";
+import { globalLimiter, writeLimiter } from "./middlewares/rateLimiter";
 
 const app: Express = express();
+
+// Replit proxies requests — trust the first hop so rate limiting
+// correctly identifies real client IPs from X-Forwarded-For
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -40,6 +45,15 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting — global cap on all API routes, tighter cap on writes
+app.use("/api", globalLimiter);
+app.use("/api", (req, res, next) => {
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+    return writeLimiter(req, res, next);
+  }
+  next();
+});
 
 app.use("/api", fixturesRouter);
 

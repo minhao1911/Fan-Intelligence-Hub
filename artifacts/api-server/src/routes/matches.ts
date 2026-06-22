@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { db, matchesTable, nationsTable, pollsTable, pollOptionsTable, pollVotesTable, reactionsTable, usersTable, matchPredictionsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requirePremium } from "../middlewares/requirePremium";
@@ -8,9 +8,18 @@ import { CastPollVoteBody, SubmitReactionBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-async function formatMatchRow(m: any) {
-  const [homeNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, m.homeNationCode));
-  const [awayNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, m.awayNationCode));
+/** Build a nation lookup map from a list of matches in ONE query (no N+1). */
+async function buildNationMap(matches: { homeNationCode: string; awayNationCode: string }[]) {
+  const codes = [...new Set(matches.flatMap((m) => [m.homeNationCode, m.awayNationCode]))];
+  if (codes.length === 0) return new Map<string, any>();
+  const nations = await db.select().from(nationsTable).where(inArray(nationsTable.code, codes));
+  return new Map(nations.map((n) => [n.code, n]));
+}
+
+/** Format a single match row using a pre-fetched nation map — zero extra DB calls. */
+function formatMatchRow(m: any, nationMap: Map<string, any>) {
+  const homeNation = nationMap.get(m.homeNationCode);
+  const awayNation = nationMap.get(m.awayNationCode);
   return {
     id: m.id,
     homeNationCode: m.homeNationCode,
@@ -49,8 +58,9 @@ router.get("/matches", async (req, res): Promise<void> => {
     .orderBy(matchesTable.scheduledAt)
     .limit(limit);
 
-  const formatted = await Promise.all(matches.map(formatMatchRow));
-  res.json(formatted);
+  // Single nation query instead of 2×N queries
+  const nationMap = await buildNationMap(matches);
+  res.json(matches.map((m) => formatMatchRow(m, nationMap)));
 });
 
 router.get("/matches/:id", async (req, res): Promise<void> => {
@@ -63,12 +73,27 @@ router.get("/matches/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [homeNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, match.homeNationCode));
-  const [awayNation] = await db.select().from(nationsTable).where(eq(nationsTable.code, match.awayNationCode));
+  // Fetch both nations in parallel — no sequential N+1
+  const [[homeNation], [awayNation], polls] = await Promise.all([
+    db.select().from(nationsTable).where(eq(nationsTable.code, match.homeNationCode)),
+    db.select().from(nationsTable).where(eq(nationsTable.code, match.awayNationCode)),
+    db.select().from(pollsTable).where(eq(pollsTable.matchId, id)),
+  ]);
 
-  const polls = await db.select().from(pollsTable).where(eq(pollsTable.matchId, id));
-  const formattedPolls = await Promise.all(polls.map(async (p) => {
-    const options = await db.select().from(pollOptionsTable).where(eq(pollOptionsTable.pollId, p.id));
+  // Fetch ALL poll options in one query, group by pollId — no per-poll queries
+  const pollIds = polls.map((p) => p.id);
+  const allOptions = pollIds.length > 0
+    ? await db.select().from(pollOptionsTable).where(inArray(pollOptionsTable.pollId, pollIds))
+    : [];
+  const optionsByPoll = new Map<number, typeof allOptions>();
+  for (const o of allOptions) {
+    const arr = optionsByPoll.get(o.pollId) ?? [];
+    arr.push(o);
+    optionsByPoll.set(o.pollId, arr);
+  }
+
+  const formattedPolls = polls.map((p) => {
+    const options = optionsByPoll.get(p.id) ?? [];
     const totalVotes = options.reduce((sum, o) => sum + o.voteCount, 0);
     return {
       id: p.id,
@@ -85,7 +110,7 @@ router.get("/matches/:id", async (req, res): Promise<void> => {
       userVote: null,
       closesAt: p.closesAt?.toISOString() ?? null,
     };
-  }));
+  });
 
   const reactionCounts = await db
     .select({ type: reactionsTable.reactionType, count: sql<number>`count(*)::int` })
