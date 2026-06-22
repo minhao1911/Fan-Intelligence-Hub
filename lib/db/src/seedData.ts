@@ -1,69 +1,76 @@
 export const nations = [
-  { code: "USA", name: "United States", flagEmoji: "🇺🇸", confederation: "CONCACAF" },
+  // CONCACAF
   { code: "MEX", name: "Mexico", flagEmoji: "🇲🇽", confederation: "CONCACAF" },
   { code: "CAN", name: "Canada", flagEmoji: "🇨🇦", confederation: "CONCACAF" },
+  { code: "USA", name: "United States", flagEmoji: "🇺🇸", confederation: "CONCACAF" },
   { code: "PAN", name: "Panama", flagEmoji: "🇵🇦", confederation: "CONCACAF" },
-  { code: "HND", name: "Honduras", flagEmoji: "🇭🇳", confederation: "CONCACAF" },
-  { code: "CRC", name: "Costa Rica", flagEmoji: "🇨🇷", confederation: "CONCACAF" },
+  { code: "CUW", name: "Curaçao", flagEmoji: "🇨🇼", confederation: "CONCACAF" },
+  { code: "HTI", name: "Haiti", flagEmoji: "🇭🇹", confederation: "CONCACAF" },
+  // CONMEBOL
   { code: "ARG", name: "Argentina", flagEmoji: "🇦🇷", confederation: "CONMEBOL" },
   { code: "BRA", name: "Brazil", flagEmoji: "🇧🇷", confederation: "CONMEBOL" },
   { code: "COL", name: "Colombia", flagEmoji: "🇨🇴", confederation: "CONMEBOL" },
   { code: "URU", name: "Uruguay", flagEmoji: "🇺🇾", confederation: "CONMEBOL" },
   { code: "ECU", name: "Ecuador", flagEmoji: "🇪🇨", confederation: "CONMEBOL" },
-  { code: "VEN", name: "Venezuela", flagEmoji: "🇻🇪", confederation: "CONMEBOL" },
+  { code: "PAR", name: "Paraguay", flagEmoji: "🇵🇾", confederation: "CONMEBOL" },
+  // UEFA
   { code: "FRA", name: "France", flagEmoji: "🇫🇷", confederation: "UEFA" },
   { code: "ENG", name: "England", flagEmoji: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", confederation: "UEFA" },
   { code: "GER", name: "Germany", flagEmoji: "🇩🇪", confederation: "UEFA" },
   { code: "ESP", name: "Spain", flagEmoji: "🇪🇸", confederation: "UEFA" },
   { code: "POR", name: "Portugal", flagEmoji: "🇵🇹", confederation: "UEFA" },
   { code: "NED", name: "Netherlands", flagEmoji: "🇳🇱", confederation: "UEFA" },
-  { code: "ITA", name: "Italy", flagEmoji: "🇮🇹", confederation: "UEFA" },
   { code: "BEL", name: "Belgium", flagEmoji: "🇧🇪", confederation: "UEFA" },
   { code: "CRO", name: "Croatia", flagEmoji: "🇭🇷", confederation: "UEFA" },
-  { code: "SRB", name: "Serbia", flagEmoji: "🇷🇸", confederation: "UEFA" },
   { code: "AUT", name: "Austria", flagEmoji: "🇦🇹", confederation: "UEFA" },
   { code: "SUI", name: "Switzerland", flagEmoji: "🇨🇭", confederation: "UEFA" },
-  { code: "DEN", name: "Denmark", flagEmoji: "🇩🇰", confederation: "UEFA" },
-  { code: "TUR", name: "Turkey", flagEmoji: "🇹🇷", confederation: "UEFA" },
+  { code: "NOR", name: "Norway", flagEmoji: "🇳🇴", confederation: "UEFA" },
+  { code: "SWE", name: "Sweden", flagEmoji: "🇸🇪", confederation: "UEFA" },
   { code: "SCO", name: "Scotland", flagEmoji: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", confederation: "UEFA" },
-  { code: "SVN", name: "Slovenia", flagEmoji: "🇸🇮", confederation: "UEFA" },
+  { code: "TUR", name: "Türkiye", flagEmoji: "🇹🇷", confederation: "UEFA" },
+  { code: "CZE", name: "Czech Republic", flagEmoji: "🇨🇿", confederation: "UEFA" },
+  { code: "BIH", name: "Bosnia & Herzegovina", flagEmoji: "🇧🇦", confederation: "UEFA" },
+  // CAF
   { code: "MAR", name: "Morocco", flagEmoji: "🇲🇦", confederation: "CAF" },
   { code: "SEN", name: "Senegal", flagEmoji: "🇸🇳", confederation: "CAF" },
-  { code: "NGA", name: "Nigeria", flagEmoji: "🇳🇬", confederation: "CAF" },
   { code: "EGY", name: "Egypt", flagEmoji: "🇪🇬", confederation: "CAF" },
-  { code: "CMR", name: "Cameroon", flagEmoji: "🇨🇲", confederation: "CAF" },
   { code: "TUN", name: "Tunisia", flagEmoji: "🇹🇳", confederation: "CAF" },
   { code: "RSA", name: "South Africa", flagEmoji: "🇿🇦", confederation: "CAF" },
   { code: "GHA", name: "Ghana", flagEmoji: "🇬🇭", confederation: "CAF" },
-  { code: "CIV", name: "Ivory Coast", flagEmoji: "🇨🇮", confederation: "CAF" },
+  { code: "CIV", name: "Côte d'Ivoire", flagEmoji: "🇨🇮", confederation: "CAF" },
+  { code: "CPV", name: "Cabo Verde", flagEmoji: "🇨🇻", confederation: "CAF" },
+  { code: "ALG", name: "Algeria", flagEmoji: "🇩🇿", confederation: "CAF" },
+  { code: "COD", name: "DR Congo", flagEmoji: "🇨🇩", confederation: "CAF" },
+  // AFC
   { code: "JPN", name: "Japan", flagEmoji: "🇯🇵", confederation: "AFC" },
   { code: "KOR", name: "South Korea", flagEmoji: "🇰🇷", confederation: "AFC" },
   { code: "AUS", name: "Australia", flagEmoji: "🇦🇺", confederation: "AFC" },
-  { code: "IRN", name: "Iran", flagEmoji: "🇮🇷", confederation: "AFC" },
+  { code: "IRN", name: "IR Iran", flagEmoji: "🇮🇷", confederation: "AFC" },
   { code: "KSA", name: "Saudi Arabia", flagEmoji: "🇸🇦", confederation: "AFC" },
   { code: "IRQ", name: "Iraq", flagEmoji: "🇮🇶", confederation: "AFC" },
   { code: "JOR", name: "Jordan", flagEmoji: "🇯🇴", confederation: "AFC" },
   { code: "UZB", name: "Uzbekistan", flagEmoji: "🇺🇿", confederation: "AFC" },
+  { code: "QAT", name: "Qatar", flagEmoji: "🇶🇦", confederation: "AFC" },
+  // OFC
   { code: "NZL", name: "New Zealand", flagEmoji: "🇳🇿", confederation: "OFC" },
-  { code: "JAM", name: "Jamaica", flagEmoji: "🇯🇲", confederation: "CONCACAF" },
-  { code: "ALG", name: "Algeria", flagEmoji: "🇩🇿", confederation: "CAF" },
 ];
 
 type GroupEntry = [string, string, string, string];
 
+// Real FIFA World Cup 2026 groups (draw: December 5, 2025, Kennedy Center, Washington D.C.)
 export const groups: Record<string, GroupEntry> = {
-  A: ["USA", "MEX", "MAR", "NZL"],
-  B: ["CAN", "HND", "SEN", "ALG"],
-  C: ["FRA", "KOR", "NGA", "CRC"],
-  D: ["BRA", "VEN", "CMR", "IRQ"],
-  E: ["ENG", "POR", "JPN", "RSA"],
-  F: ["ESP", "NED", "AUS", "GHA"],
-  G: ["GER", "ARG", "IRN", "JAM"],
-  H: ["ITA", "CRO", "URU", "CIV"],
-  I: ["BEL", "SUI", "ECU", "TUN"],
-  J: ["TUR", "SRB", "COL", "KSA"],
-  K: ["AUT", "DEN", "EGY", "UZB"],
-  L: ["SCO", "SVN", "PAN", "JOR"],
+  A: ["MEX", "KOR", "RSA", "CZE"],
+  B: ["CAN", "SUI", "QAT", "BIH"],
+  C: ["BRA", "MAR", "SCO", "HTI"],
+  D: ["USA", "PAR", "AUS", "TUR"],
+  E: ["GER", "CUW", "CIV", "ECU"],
+  F: ["NED", "JPN", "TUN", "SWE"],
+  G: ["BEL", "EGY", "IRN", "NZL"],
+  H: ["ESP", "CPV", "KSA", "URU"],
+  I: ["FRA", "SEN", "NOR", "IRQ"],
+  J: ["ARG", "ALG", "AUT", "JOR"],
+  K: ["POR", "COL", "UZB", "COD"],
+  L: ["ENG", "CRO", "GHA", "PAN"],
 };
 
 function groupMatchDates(groupIndex: number): [Date, Date, Date, Date, Date, Date] {
@@ -81,7 +88,7 @@ function groupMatchDates(groupIndex: number): [Date, Date, Date, Date, Date, Dat
 
   const md1Day = groupDay;
   const md2Day = groupDay + 5;
-  const md3Day = groupDay + 11;
+  const md3Day = groupDay + 15; // MD3 pushed to June 26-29 to stay future
   const h0 = slotHours[groupSlot];
   const h1 = slotHours[groupSlot + 1] ?? slotHours[0];
 
