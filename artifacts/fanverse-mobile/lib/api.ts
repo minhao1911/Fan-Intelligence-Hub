@@ -75,6 +75,7 @@ export interface Prediction {
   predictedHomeScore: number | null;
   predictedAwayScore: number | null;
   isResolved: boolean;
+  isCorrect: boolean | null;
   xpEarned: number | null;
   createdAt: string;
   match: {

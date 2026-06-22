@@ -216,9 +216,6 @@ export default function FanLiveChat({ open, onClose, myUsername }: Props) {
                 <Wifi className="h-3 w-3 shrink-0" />
               )}
               <span className="truncate">{matchLabel}</span>
-              {activeMatch && isLive && activeMatch.minute != null && (
-                <span className="ml-auto shrink-0 font-mono">{activeMatch.minute}'</span>
-              )}
               {isLive && (
                 <span className="ml-auto shrink-0 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                   Live

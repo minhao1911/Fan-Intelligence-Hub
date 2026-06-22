@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListDiscussions, useCreateDiscussion, getListDiscussionsQueryKey } from "@workspace/api-client-react";
+import { useListDiscussions, useCreateDiscussion, getListDiscussionsQueryKey, DiscussionInputCategory } from "@workspace/api-client-react";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export default function Discussions() {
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) return;
     createDiscussion.mutate(
-      { data: { title: title.trim(), content: content.trim(), category: newCategory, nationCode: nationCode ?? null } },
+      { data: { title: title.trim(), content: content.trim(), category: newCategory as DiscussionInputCategory, nationCode: nationCode ?? undefined } },
       {
         onSuccess: () => {
           setTitle("");

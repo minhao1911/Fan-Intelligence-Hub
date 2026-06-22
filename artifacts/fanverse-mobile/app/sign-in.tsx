@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
-import { useSignIn, useSignUp } from '@clerk/expo';
+import { useSignIn, useSignUp, useClerk } from '@clerk/expo';
 import { useColors } from '@/hooks/useColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -15,8 +15,11 @@ type Mode = 'signIn' | 'signUp';
 export default function SignInScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn();
-  const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp();
+  const { signIn, fetchStatus: signInFetch } = useSignIn();
+  const { signUp, fetchStatus: signUpFetch } = useSignUp();
+  const { setActive } = useClerk();
+  const signInLoaded = signInFetch !== 'fetching';
+  const signUpLoaded = signUpFetch !== 'fetching';
 
   const [mode, setMode] = useState<Mode>('signIn');
   const [email, setEmail] = useState('');
@@ -28,15 +31,17 @@ export default function SignInScreen() {
   const [code, setCode] = useState('');
 
   const handleSignIn = async () => {
-    if (!signInLoaded) return;
+    if (!signInLoaded || !signIn) return;
     setLoading(true);
     setError('');
     try {
-      const result = await signIn.create({ identifier: email, password });
-      if (result.status === 'complete') {
-        await setSignInActive({ session: result.createdSessionId });
+      const { error } = await signIn.create({ identifier: email, password });
+      if (!error && signIn.status === 'complete') {
+        await setActive({ session: signIn.createdSessionId });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.dismiss();
+      } else if (error) {
+        setError(error.message ?? 'Sign in failed');
       }
     } catch (e: any) {
       setError(e.errors?.[0]?.message ?? e.message ?? 'Sign in failed');
@@ -46,12 +51,12 @@ export default function SignInScreen() {
   };
 
   const handleSignUp = async () => {
-    if (!signUpLoaded) return;
+    if (!signUpLoaded || !signUp) return;
     setLoading(true);
     setError('');
     try {
       await signUp.create({ emailAddress: email, password, username });
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      await signUp.verifications.sendEmailCode();
       setPendingVerification(true);
     } catch (e: any) {
       setError(e.errors?.[0]?.message ?? e.message ?? 'Sign up failed');
@@ -61,15 +66,17 @@ export default function SignInScreen() {
   };
 
   const handleVerify = async () => {
-    if (!signUpLoaded) return;
+    if (!signUpLoaded || !signUp) return;
     setLoading(true);
     setError('');
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code });
-      if (result.status === 'complete') {
-        await setSignUpActive({ session: result.createdSessionId });
+      const { error } = await signUp.verifications.verifyEmailCode({ code });
+      if (!error && signUp.status === 'complete') {
+        await setActive({ session: signUp.createdSessionId });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.dismiss();
+      } else if (error) {
+        setError(error.message ?? 'Verification failed');
       }
     } catch (e: any) {
       setError(e.errors?.[0]?.message ?? e.message ?? 'Verification failed');

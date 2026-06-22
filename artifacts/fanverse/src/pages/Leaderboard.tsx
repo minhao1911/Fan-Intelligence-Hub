@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { useGetLeaderboard, useListNations, useListMatches } from "@workspace/api-client-react";
+import { useGetLeaderboard, useListNations, useListMatches, getListMatchesQueryKey, getGetLeaderboardQueryKey } from "@workspace/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
 import { FounderBadge, PremiumBadge } from "@/components/ui/UserBadges";
@@ -80,16 +80,18 @@ export default function Leaderboard() {
   const [flashedIds, setFlashedIds]         = useState<Set<string>>(new Set());
 
   // Check for live matches to decide polling speed
+  const liveMatchParams = { status: "live", limit: 1 } as const;
   const { data: liveMatches } = useListMatches(
-    { status: "live", limit: 1 },
-    { query: { refetchInterval: 10_000 } }
+    liveMatchParams,
+    { query: { queryKey: getListMatchesQueryKey(liveMatchParams), refetchInterval: 10_000 } }
   );
   const hasLive = Array.isArray(liveMatches) && liveMatches.length > 0;
 
   // Fast poll when live, slow otherwise
+  const leaderboardParams = { limit: 100, nationCode: selectedNation === "all" ? undefined : selectedNation };
   const { data: raw, isLoading, dataUpdatedAt } = useGetLeaderboard(
-    { limit: 100, nationCode: selectedNation === "all" ? undefined : selectedNation },
-    { query: { refetchInterval: hasLive ? 4_000 : 30_000 } }
+    leaderboardParams,
+    { query: { queryKey: getGetLeaderboardQueryKey(leaderboardParams), refetchInterval: hasLive ? 4_000 : 30_000 } }
   );
 
   const { data: nations } = useListNations({});
@@ -105,7 +107,7 @@ export default function Leaderboard() {
     const changed: string[] = [];
 
     const result = raw.map((e, idx) => {
-      const id = e.user.id;
+      const id = String(e.user.id);
       const prevEntry = prev.get(id);
       const currentRank = idx + 1;
       const delta = prevEntry && !isFirstFetch.current
@@ -121,7 +123,7 @@ export default function Leaderboard() {
 
     // Update snapshot
     const newSnap = new Map<string, { rank: number; xp: number }>();
-    result.forEach((e) => newSnap.set(e.user.id, { rank: e.rank, xp: e.user.reputationPoints }));
+    result.forEach((e) => newSnap.set(String(e.user.id), { rank: e.rank, xp: e.user.reputationPoints }));
 
     if (!isFirstFetch.current && changed.length > 0) {
       setFlashedIds(new Set(changed));
@@ -271,9 +273,9 @@ export default function Leaderboard() {
           {/* ── Podium ───────────────────────────────────── */}
           {top3.length >= 3 && !search && tierFilter === "All" && (
             <div className="grid grid-cols-3 gap-3 items-end">
-              <PodiumCard entry={top3[1]} rank={2} height="h-36" nations={nations} flashed={flashedIds.has(top3[1].user.id)} />
-              <PodiumCard entry={top3[0]} rank={1} height="h-44" nations={nations} featured flashed={flashedIds.has(top3[0].user.id)} />
-              <PodiumCard entry={top3[2]} rank={3} height="h-28" nations={nations} flashed={flashedIds.has(top3[2].user.id)} />
+              <PodiumCard entry={top3[1]} rank={2} height="h-36" nations={nations} flashed={flashedIds.has(String(top3[1].user.id))} />
+              <PodiumCard entry={top3[0]} rank={1} height="h-44" nations={nations} featured flashed={flashedIds.has(String(top3[0].user.id))} />
+              <PodiumCard entry={top3[2]} rank={3} height="h-28" nations={nations} flashed={flashedIds.has(String(top3[2].user.id))} />
             </div>
           )}
 
@@ -295,7 +297,7 @@ export default function Leaderboard() {
                 const nation = Array.isArray(nations) ? nations.find((n) => n.code === entry.user.nationCode) : undefined;
                 const rank = entry.rank;
                 const meta = RANK_META[rank];
-                const flashed = flashedIds.has(entry.user.id);
+                const flashed = flashedIds.has(String(entry.user.id));
                 return (
                   <div
                     key={entry.user.id}

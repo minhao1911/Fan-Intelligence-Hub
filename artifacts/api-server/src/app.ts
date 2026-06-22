@@ -52,7 +52,7 @@ app.use("/api", (req, res, next) => {
   if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
     return writeLimiter(req, res, next);
   }
-  next();
+  return next();
 });
 
 app.use("/api", fixturesRouter);

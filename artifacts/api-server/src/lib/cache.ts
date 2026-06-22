@@ -23,7 +23,7 @@ export const TTL = {
   CONFIDENCE:   15_000,
 } as const;
 
-const cache = new LRUCache<string, unknown>({
+const cache = new LRUCache<string, NonNullable<unknown>>({
   max: 500,            // max 500 distinct keys in memory
   ttl: 30_000,         // default TTL; overridden per-entry via set()
   allowStale: false,   // never serve expired entries
@@ -36,7 +36,7 @@ export function cacheGet<T>(key: string): T | undefined {
 
 /** Write a typed entry with an optional TTL (ms). */
 export function cacheSet<T>(key: string, value: T, ttl?: number): void {
-  cache.set(key, value, ttl !== undefined ? { ttl } : undefined);
+  cache.set(key, value as NonNullable<unknown>, ttl !== undefined ? { ttl } : undefined);
 }
 
 /** Delete a single key. */

@@ -71,7 +71,7 @@ function ActivityItemCard({ item }: { item: ActivityItem }) {
                 <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest ${catColor}`}>
                   {item.category as string}
                 </span>
-                {item.nationCode && (
+                {!!item.nationCode && (
                   <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase">
                     {item.nationCode as string}
                   </span>
@@ -141,7 +141,7 @@ function ActivityItemCard({ item }: { item: ActivityItem }) {
                   {homeCode} vs {awayCode}
                 </p>
               )}
-              {item.comment && (
+              {!!item.comment && (
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.comment as string}</p>
               )}
             </div>

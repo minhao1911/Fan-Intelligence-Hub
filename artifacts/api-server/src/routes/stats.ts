@@ -20,7 +20,7 @@ router.get("/stats/global", async (_req, res): Promise<void> => {
     return {
       totalFans: fans.count,
       totalVotesCast: votes.total ?? 0,
-      totalNationsActive: activeNations?.count ?? 0,
+      totalNationsActive: activeNations[0]?.count ?? 0,
       totalMatchesCovered: matches.count,
       totalDiscussions: discussions.count,
       mostActivatedNation: topNation[0]?.code ?? null,

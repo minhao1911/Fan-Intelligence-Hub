@@ -11,6 +11,7 @@ import {
   getGetReactionSummaryQueryKey,
   useCastPollVote,
   useSubmitReaction,
+  ReactionInputReactionType,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -303,8 +304,8 @@ export default function MatchDetail() {
   const { data: match, isLoading: matchLoading } = useGetMatch(matchId, {
     query: { enabled: !!matchId, queryKey: getGetMatchQueryKey(matchId) },
   });
-  const { data: polls } = useListMatchPolls(matchId, { query: { enabled: !!matchId } });
-  const { data: reactionSummary } = useGetReactionSummary(matchId, { query: { enabled: !!matchId } });
+  const { data: polls } = useListMatchPolls(matchId, { query: { queryKey: getListMatchPollsQueryKey(matchId), enabled: !!matchId } });
+  const { data: reactionSummary } = useGetReactionSummary(matchId, { query: { queryKey: getGetReactionSummaryQueryKey(matchId), enabled: !!matchId } });
 
   const castVote = useCastPollVote();
   const submitReaction = useSubmitReaction();
@@ -325,7 +326,7 @@ export default function MatchDetail() {
     if (myReaction) return;
     setMyReaction(reactionType);
     submitReaction.mutate(
-      { matchId, data: { reactionType } },
+      { matchId, data: { reactionType: reactionType as ReactionInputReactionType } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetReactionSummaryQueryKey(matchId) });
@@ -516,7 +517,7 @@ export default function MatchDetail() {
                     Dominant Mood
                   </div>
                   <div className="text-4xl mb-1">
-                    {SENTIMENT_EMOJI[reactionSummary.dominantReaction] || "😐"}
+                    {(reactionSummary.dominantReaction ? SENTIMENT_EMOJI[reactionSummary.dominantReaction] : null) || "😐"}
                   </div>
                   <div className="text-lg font-heading font-bold text-primary capitalize">
                     {reactionSummary.dominantReaction || "Neutral"}

@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
-import { useListMatches } from "@workspace/api-client-react";
+import { useListMatches, getListMatchesQueryKey } from "@workspace/api-client-react";
 
 export default function LiveMatchTicker() {
+  const liveParams = { status: "live", limit: 10 } as const;
   const { data: liveMatches } = useListMatches(
-    { status: "live", limit: 10 },
-    { refetchInterval: 30_000 },
+    liveParams,
+    { query: { queryKey: getListMatchesQueryKey(liveParams), refetchInterval: 30_000 } },
   );
 
   const [activeIdx, setActiveIdx] = useState(0);

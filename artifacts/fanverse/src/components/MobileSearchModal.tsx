@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { useListNations, useListMatches } from "@workspace/api-client-react";
+import { useListNations, useListMatches, getListNationsQueryKey, getListMatchesQueryKey } from "@workspace/api-client-react";
 import { Search, X, Globe, CalendarDays, Shield, Users } from "lucide-react";
 
 interface Props {
@@ -15,18 +15,21 @@ export default function MobileSearchModal({ open, onClose }: Props) {
 
   const q = query.trim().toLowerCase();
 
+  const nationsParams = { search: q || undefined };
   const { data: nations } = useListNations(
-    { search: q || undefined },
-    { query: { enabled: open } },
+    nationsParams,
+    { query: { queryKey: getListNationsQueryKey(nationsParams), enabled: open } },
   );
 
+  const upcomingParams = { status: "upcoming", limit: 20 } as const;
   const { data: upcomingMatches } = useListMatches(
-    { status: "upcoming", limit: 20 },
-    { query: { enabled: open } },
+    upcomingParams,
+    { query: { queryKey: getListMatchesQueryKey(upcomingParams), enabled: open } },
   );
+  const liveParams = { status: "live", limit: 10 } as const;
   const { data: liveMatches } = useListMatches(
-    { status: "live", limit: 10 },
-    { query: { enabled: open } },
+    liveParams,
+    { query: { queryKey: getListMatchesQueryKey(liveParams), enabled: open } },
   );
 
   const allMatches = [

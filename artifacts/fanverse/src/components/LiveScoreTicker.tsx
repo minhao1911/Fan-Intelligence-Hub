@@ -1,11 +1,12 @@
-import { useListMatches } from "@workspace/api-client-react";
+import { useListMatches, getListMatchesQueryKey } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { useRef, useEffect } from "react";
 
 export default function LiveScoreTicker() {
+  const liveParams = { status: "live", limit: 20 } as const;
   const { data: liveMatches } = useListMatches(
-    { status: "live", limit: 20 },
-    { query: { refetchInterval: 30_000 } },
+    liveParams,
+    { query: { queryKey: getListMatchesQueryKey(liveParams), refetchInterval: 30_000 } },
   );
 
   const trackRef = useRef<HTMLDivElement>(null);

@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useClerk, useUser, useAuth } from "@clerk/react";
-import { useGetMe, useListMatches } from "@workspace/api-client-react";
+import { useGetMe, useListMatches, getListMatchesQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ReputationBadge } from "@/components/ui/ReputationBadge";
@@ -190,7 +190,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: user } = useGetMe();
   const { data: liveMatches } = useListMatches(
     { status: "live", limit: 1 },
-    { query: { refetchInterval: 30_000 } },
+    { query: { queryKey: getListMatchesQueryKey({ status: "live", limit: 1 }), refetchInterval: 30_000 } },
   );
   const hasLive = (liveMatches?.length ?? 0) > 0;
 
